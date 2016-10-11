@@ -6,7 +6,7 @@ rex                 : implicit-expression [ ":" explicit-expression ]
 implicit-expression : [star] (transition [star])*
 explicit-expression : node-line (("," | "\n") node-line)*
 
-node-line           : node-identifier (WHITESPACE transition "->" node-identifier)*
+node-line           : node-identifier (WHITESPACE+ transition WHITESPACE* "->" WHITESPACE* node-identifier)*
 node-identifier     : (NUMBER | ALPHA)+
 
 transition          : character | range | glob
