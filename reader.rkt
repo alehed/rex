@@ -1,9 +1,9 @@
 #lang br/quicklang
 
-(require "rex-parser.rkt")
+(require "parser.rkt")
 
 (define (read-syntax path port)
-  (datum->syntax #f `(module rex-mod "rex-expander.rkt"
+  (datum->syntax #f `(module rex-mod "expander.rkt"
                        ,(parse path (tokenize port)))))
 (provide read-syntax)
 

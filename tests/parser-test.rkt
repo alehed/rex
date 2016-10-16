@@ -1,2 +1,2 @@
-#lang reader "../rex-reader.rkt"
+#lang reader "../reader.rkt"
 hello;; test test!
