@@ -5,3 +5,7 @@
      'PARSE-TREE))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
+
+
+(define node-vector (make-vector 1 '("0" () -1  #f)))
+
