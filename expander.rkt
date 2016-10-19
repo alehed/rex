@@ -3,8 +3,10 @@
 (define-macro (rex-module-begin PARSE-TREE)
   #'(#%module-begin
      (display "Welcome to rex!\n")
-     (void PARSE-TREE)
-     (match-input (vector-ref (current-command-line-arguments) 0) 0)))
+     (display 'PARSE-TREE)
+     (display "\n")
+     ;;(match-input (vector-ref (current-command-line-arguments) 0) 0)
+     ))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
 (define (fold-funcs apl funcs)

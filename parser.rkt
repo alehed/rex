@@ -6,7 +6,7 @@ rex                 : implicit-expression [ ":" explicit-expression ]
 implicit-expression : [star] (transition [star])*
 explicit-expression : node-line ("," node-line)*
 
-node-line           : WHITESPACE* node-identifier (WHITESPACE+ transition WHITESPACE* "-" ">" WHITESPACE* node-identifier)*
+node-line           : node-identifier (transition "-" ">" node-identifier)*
 node-identifier     : (NUMBER | ALPHA | PUNCTUATION)+
 
 transition          : character | range | glob
@@ -15,7 +15,7 @@ span                : character ["-" character]
 
 ;; In addition to the regular ascii escape sequences
 ;; the following characters are reserved and have to be escaped with \:
-;; ;:*.,{}[]|\-
-character           : NUMBER | ALPHA | WHITESPACE | PUNCTUATION | ESCAPED-CHAR
+;; space;:*.,{}[]|\-
+character           : NUMBER | ALPHA | PUNCTUATION | ESCAPED-CHAR
 glob                : "."
 star                : "*"
