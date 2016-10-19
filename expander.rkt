@@ -25,11 +25,9 @@
   void)
 (define character
   void)
-(define ALPHA
+(define GLOB
   void)
-(define WHITESPACE
-  void)
-(define NUMBER
+(define STAR
   void)
 (define node-identifier
   void)
@@ -43,9 +41,8 @@
 (provide explicit-expression)
 (provide transition)
 (provide character)
-(provide ALPHA)
-(provide WHITESPACE)
-(provide NUMBER)
+(provide GLOB)
+(provide STAR)
 (provide node-identifier)
 (provide node-line)
 (provide glob)
