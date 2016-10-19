@@ -28,20 +28,25 @@
   test3)
 (provide rex)
 
-(define implicit-expression
-  void)
+;; we pass around one index and two stacks
+;; index 1: The current node it is at (index into node-vector)
+;; stack 1: stack of first nodes
+;; stack 2: stack of fallback nodes
+(define-macro (implicit-expression TRANSITION ...)
+  #'(begin
+      TRANSITION ...))
 (provide implicit-expression)
 
-(define explicit-expression
-  void)
+(define-macro (explicit-expression NODE-LINE ...)
+  (void))
 (provide explicit-expression)
 
 (define transition
-  void)
+  display)
 (provide transition)
 
-(define character
-  void)
+(define (character char)
+  char)
 (provide character)
 
 (define node-identifier
@@ -60,15 +65,6 @@
   (display "Star!\n"))
 (provide STAR)
 
-;; we pass around one index and two stacks
-;; index 1: The current node it is at (index into node-vector)
-;; stack 1: stack of first nodes
-;; stack 2: stack of fallback nodes
-;; (define-macro (implicit-expression TRANSITION ...)
-;;   #'(
-;;       (display (fold-funcs '(0 () ()) (list TRANSITION ...))
-;;       (void))))
-;; (provide implicit-expression)
 
 ;; Expression Matching
 
