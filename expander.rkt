@@ -23,7 +23,7 @@
 
 ;; Parse Tree Functions
 
-(define (rex test1 [separator ";"] [test3 void])
+(define (rex test1 [separator ":"] [test3 (void)])
   test1
   test3)
 (provide rex)
