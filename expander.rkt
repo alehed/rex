@@ -14,11 +14,11 @@
 
 ;; Expression Generation
 
-(define node-vector (make-vector 1))
+(define node-vector (make-vector 1 '("1" () -1 #f)))
 
 (define (fold-funcs apl funcs)
   (for/fold ([current-apl apl])
-      ([func (in-list funcs)])
+            ([func (in-list funcs)])
     (apply func current-apl)))
 
 ;; Parse Tree Functions
@@ -32,17 +32,20 @@
 ;; index 1: The current node it is at (index into node-vector)
 ;; stack 1: stack of first nodes
 ;; stack 2: stack of fallback nodes
+(define initial-arg '(0 '() '()))
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
-      TRANSITION ...))
+      (void (fold-funcs initial-arg (list TRANSITION ...)))))
 (provide implicit-expression)
 
 (define-macro (explicit-expression NODE-LINE ...)
   (void))
 (provide explicit-expression)
 
-(define transition
-  display)
+(define-macro (transition CHAR)
+  #`(lambda (index first-nodes fallbacks)
+      (display CHAR)
+      '((add1 index) first-nodes fallbacks)))
 (provide transition)
 
 (define (character char)
@@ -57,12 +60,16 @@
   void)
 (provide node-line)
 
-(define (GLOB)
-  (display "the glob!\n"))
+(define GLOB
+  #'(lambda (index first-nodes fallbacks)
+      (display "the glob!\n")
+      '(index first-nodes fallbacks)))
 (provide GLOB)
 
-(define (STAR)
-  (display "Star!\n"))
+(define-macro STAR
+  #'(lambda (index first-nodes fallbacks)
+      (display "Hello World!")
+      '(index first-nodes fallbacks)))
 (provide STAR)
 
 
