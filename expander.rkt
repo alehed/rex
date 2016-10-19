@@ -1,58 +1,64 @@
 #lang br/quicklang
 
+;; module begin
+
 (define-macro (rex-module-begin PARSE-TREE)
   #'(#%module-begin
      (display "Welcome to rex!\n")
      (display 'PARSE-TREE)
      (display "\n")
+     PARSE-TREE
      ;;(match-input (vector-ref (current-command-line-arguments) 0) 0)
      ))
 (provide (rename-out [rex-module-begin #%module-begin]))
+
+;; Expression Generation
+
+(define node-vector (make-vector 1))
 
 (define (fold-funcs apl funcs)
   (for/fold ([current-apl apl])
       ([func (in-list funcs)])
     (apply func current-apl)))
 
+;; Parse Tree Functions
+
 (define (rex test1 [separator ";"] [test3 void])
-  (display separator)
-  (display test3))
+  test1
+  test3)
+(provide rex)
+
 (define implicit-expression
   void)
+(provide implicit-expression)
+
 (define explicit-expression
   void)
+(provide explicit-expression)
+
 (define transition
   void)
+(provide transition)
+
 (define character
   void)
-(define GLOB
-  void)
-(define STAR
-  void)
+(provide character)
+
 (define node-identifier
   void)
+(provide node-identifier)
+
 (define node-line
   void)
-(define (glob dot)
-  void)
-
-(provide rex)
-(provide implicit-expression)
-(provide explicit-expression)
-(provide transition)
-(provide character)
-(provide GLOB)
-(provide STAR)
-(provide node-identifier)
 (provide node-line)
-(provide glob)
-;; (define (implicit-expression)
-;;   (void))
-;; (provide implicit-expression)
 
-;; (define (explicit-expression ARGS ...)
-;;   (void))
-;; (provide explicit-expression)
+(define (GLOB)
+  (display "the glob!\n"))
+(provide GLOB)
+
+(define (STAR)
+  (display "Star!\n"))
+(provide STAR)
 
 ;; we pass around one index and two stacks
 ;; index 1: The current node it is at (index into node-vector)
@@ -64,15 +70,7 @@
 ;;       (void))))
 ;; (provide implicit-expression)
 
-;; (define-macro (explicit-expression LINE ...)
-;;   #'(void))
-
-;; (define-macro (transition CHARACTERS ...)
-;;   #'(lambda (index first fallback)
-;;       (list ((add1 index) first fallback))))
-
-
-;; (define node-vector (make-vector 1))
+;; Expression Matching
 
 (define (match-input string state-index)
   (display string)
