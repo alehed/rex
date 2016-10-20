@@ -1,5 +1,7 @@
 #lang br/quicklang
 
+(require data/gvector)
+
 ;; module begin
 
 (define-macro (rex-module-begin PARSE-TREE)
@@ -14,17 +16,19 @@
 
 ;; Expression Generation
 
-(define node-vector (make-vector 1 '("1" () -1 #f)))
-
 (define (fold-funcs apl funcs)
   (for/fold ([current-apl apl])
             ([func (in-list funcs)])
+    (display current-apl)
     (apply func current-apl)))
+
+(define node-vector (make-gvector #:capacity 20))
 
 ;; Parse Tree Functions
 
 (define (rex test1 [separator ":"] [test3 (void)])
   test1
+  ;; Resolve references
   test3)
 (provide rex)
 
@@ -32,10 +36,10 @@
 ;; index 1: The current node it is at (index into node-vector)
 ;; stack 1: stack of first nodes
 ;; stack 2: stack of fallback nodes
-(define initial-arg '(0 '() '()))
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
-      (void (fold-funcs initial-arg (list TRANSITION ...)))))
+      (gvector-add! node-vector '("0" '() -1 #f))
+      (void (fold-funcs '(0 '() '()) (list TRANSITION ...)))))
 (provide implicit-expression)
 
 (define-macro (explicit-expression NODE-LINE ...)
@@ -43,9 +47,18 @@
 (provide explicit-expression)
 
 (define-macro (transition CHAR)
-  #`(lambda (index first-nodes fallbacks)
+  #'(lambda (index first-nodes fallbacks)
       (display CHAR)
-      '((add1 index) first-nodes fallbacks)))
+      (let ([current-node (gvector-ref node-vector index)])
+        (gvector-set! node-vector index '((car current-node)
+                                          (cons '(CHAR (add1 index)) (cadr current-node))
+                                          (caddr current-node)
+                                          (cadddr current-node))))
+      (gvector-add! node-vector '((number->string (add1 index))
+                                  '()
+                                  (car fallbacks);;TODO first number that is not nil 
+                                  #f))
+      `(,(add1 index) ,first-nodes ,fallbacks)));; TODO Bug here
 (provide transition)
 
 (define (character char)
@@ -68,8 +81,13 @@
 
 (define-macro STAR
   #'(lambda (index first-nodes fallbacks)
-      (display "Hello World!")
-      '(index first-nodes fallbacks)))
+      (display "*")
+      (let ([current-node (gvector-ref node-vector index)])
+        (gvector-set! node-vector index '((car current-node)
+                                          (cadr current-node)
+                                          '(index)
+                                          (cadddr current-node))))
+      `(,index ,first-nodes ,`(,index))))
 (provide STAR)
 
 
