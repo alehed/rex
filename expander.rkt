@@ -30,7 +30,7 @@
 
 (define (rex test1 [separator ":"] [test3 (void)])
   test1
-  ;; Resolve references
+  ;; TODO Resolve references
   test3)
 (provide rex)
 
@@ -60,11 +60,11 @@
                                   ()
                                   ,(car fallbacks);;TODO first number that is not nil 
                                   #f))
-      `(,(add1 index) ,first-nodes ,fallbacks)));; TODO Bug here
+      `(,(add1 index) ,first-nodes ,fallbacks)))
 (provide transition)
 
 (define (character char)
-  char)
+  `(,char ,char))
 (provide character)
 
 (define node-identifier
@@ -76,9 +76,7 @@
 (provide node-line)
 
 (define GLOB
-  #'(lambda (index first-nodes fallbacks)
-      (display "the glob!\n")
-      '(index first-nodes fallbacks)))
+  `(,(integer->char 0) ,(integer->char 256)))
 (provide GLOB)
 
 (define-macro STAR
