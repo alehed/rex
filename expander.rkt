@@ -50,14 +50,9 @@
                                             #t))))))
 (provide implicit-expression)
 
-(define-macro (explicit-expression NODE-LINE ...)
-  #'(begin
-      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))))
-(provide explicit-expression)
-
 (define-macro (transition CHAR)
   #'(lambda (index [first-nodes void] [fallbacks void])
-      (if (not (void? fallbacks))
+      (if (list? fallbacks)
           (begin ;; in implicit expression
             (let ([current-node (gvector-ref node-vector index)])
               (gvector-set! node-vector index `(,(car current-node)
@@ -78,13 +73,21 @@
   `(,(string-ref char 0) ,(string-ref char 0)))
 (provide character)
 
+(define-macro (explicit-expression NODE-LINE ...)
+  #'(begin
+      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))))
+(provide explicit-expression)
+
 (define-macro (node-line CONTENT ...)
     #'(lambda (index)
-        `(,index)))
+        (void (fold-funcs `(,index) (filter procedure? (list CONTENT ...))))
+        `(,(add1 index))))
 (provide node-line)
 
-(define node-identifier
-  void)
+(define-macro (node-identifier IDENT-LIST)
+  #'(lambda (index)
+      (void (display IDENT-LIST))
+      `(,index)))
 (provide node-identifier)
 
 (define GLOB
