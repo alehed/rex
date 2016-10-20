@@ -13,8 +13,7 @@
      (display "\n")
      (display (gvector->list node-vector))
      (display "\n")
-     (match-input (vector-ref (current-command-line-arguments) 0) 0)
-     ))
+     (match-input (string->list (vector-ref (current-command-line-arguments) 0)) 0)))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
 ;; Expression Generation
@@ -99,7 +98,13 @@
 
 ;; Expression Matching
 
-(define (match-input string state-index)
-  (display string)
+(define (match-input string-list state-index)
+  (display string-list)
   (display "\n")
-  #f)
+  (if (and (empty? string-list) (cadddr (gvector-ref node-vector state-index))) #t
+      (let ([new-state (calculate-new-state (car string-list) state-index)])
+        (if (equal? -1 new-state) #f
+            (match-input (cdr string-list) new-state)))))
+
+(define (calculate-new-state char current-state)
+  -1)
