@@ -41,18 +41,18 @@
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
       (gvector-add! node-vector '("0" () -1 #f))
-      (void (fold-funcs '(0 '() '()) (list TRANSITION ...)))
+      (void (fold-funcs '(0 () (-1)) (list TRANSITION ...)))
       (let ([index (sub1 (gvector-count node-vector))])
         (let ([current-node (gvector-ref node-vector index)])
           (gvector-set! node-vector index `(,(car current-node)
                                             ,(cadr current-node)
                                             ,(caddr current-node)
                                             #t))))))
-
 (provide implicit-expression)
 
-(define-macro (explicit-expression NODE-LINE ...)
-  (void))
+(define-macro (explicit-expression [","] NODE-LINE ...)
+  #'(begin
+      (void (fold/funcs '(0 () (-1)) (list NODE-LINE ...)))))
 (provide explicit-expression)
 
 (define-macro (transition CHAR)
@@ -73,13 +73,14 @@
   `(,(string-ref char 0) ,(string-ref char 0)))
 (provide character)
 
+(define-macro (node-line CONTENT ...)
+    #'(lambda (index first-nodes fallbacks)
+        `(,index ,first-nodes ,fallbacks)))
+(provide node-line)
+
 (define node-identifier
   void)
 (provide node-identifier)
-
-(define node-line
-  void)
-(provide node-line)
 
 (define GLOB
   `(,(integer->char 0) ,(integer->char 256)))
@@ -99,8 +100,6 @@
 ;; Expression Matching
 
 (define (match-input string-list state-index)
-  (display string-list)
-  (display "\n")
   (if (empty? string-list) (if (cadddr (gvector-ref node-vector state-index)) #t
                                #f)
       (let ([new-state (calculate-new-state (car string-list) state-index)])
