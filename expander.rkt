@@ -61,11 +61,11 @@
                                                 ,(cadddr current-node))))
             (gvector-add! node-vector `(,(number->string (add1 index))
                                         ()
-                                        ,(car fallbacks);;TODO: find first number that is not nil 
+                                        ,(car fallbacks);; BUG: find first number that is not nil 
                                         #f))
             `(,(add1 index) ,first-nodes ,fallbacks))
           (begin ;; else (explicit expression)
-            ;; TODO: stuff
+            ;; TODO: create new transition
             `(,index)))))
 (provide transition)
 
@@ -80,12 +80,14 @@
 
 (define-macro (node-line CONTENT ...)
     #'(lambda (index)
-        (void (fold-funcs `(,index) (filter procedure? (list CONTENT ...))))
+        ;; TODO: call node "ident"
+        (void (fold-funcs `(,index) (cdr (filter procedure? (list CONTENT ...)))))
         `(,(add1 index))))
 (provide node-line)
 
 (define-macro (node-identifier IDENT-LIST)
   #'(lambda (index)
+      ;; put in target of last transition
       (void (display IDENT-LIST))
       `(,index)))
 (provide node-identifier)
