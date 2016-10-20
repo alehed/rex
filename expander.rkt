@@ -50,23 +50,28 @@
                                             #t))))))
 (provide implicit-expression)
 
-(define-macro (explicit-expression [","] NODE-LINE ...)
+(define-macro (explicit-expression NODE-LINE ...)
   #'(begin
-      (void (fold/funcs '(0 () (-1)) (list NODE-LINE ...)))))
+      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))))
 (provide explicit-expression)
 
 (define-macro (transition CHAR)
-  #'(lambda (index first-nodes fallbacks)
-      (let ([current-node (gvector-ref node-vector index)])
-        (gvector-set! node-vector index `(,(car current-node)
-                                          ,(cons `(,CHAR ,(add1 index)) (cadr current-node))
-                                          ,(caddr current-node)
-                                          ,(cadddr current-node))))
-      (gvector-add! node-vector `(,(number->string (add1 index))
-                                  ()
-                                  ,(car fallbacks);;TODO: find first number that is not nil 
-                                  #f))
-      `(,(add1 index) ,first-nodes ,fallbacks)))
+  #'(lambda (index [first-nodes void] [fallbacks void])
+      (if (not (void? fallbacks))
+          (begin ;; in implicit expression
+            (let ([current-node (gvector-ref node-vector index)])
+              (gvector-set! node-vector index `(,(car current-node)
+                                                ,(cons `(,CHAR ,(add1 index)) (cadr current-node))
+                                                ,(caddr current-node)
+                                                ,(cadddr current-node))))
+            (gvector-add! node-vector `(,(number->string (add1 index))
+                                        ()
+                                        ,(car fallbacks);;TODO: find first number that is not nil 
+                                        #f))
+            `(,(add1 index) ,first-nodes ,fallbacks))
+          (begin ;; else (explicit expression)
+            ;; TODO: stuff
+            `(,index)))))
 (provide transition)
 
 (define (character char)
@@ -74,8 +79,8 @@
 (provide character)
 
 (define-macro (node-line CONTENT ...)
-    #'(lambda (index first-nodes fallbacks)
-        `(,index ,first-nodes ,fallbacks)))
+    #'(lambda (index)
+        `(,index)))
 (provide node-line)
 
 (define node-identifier
