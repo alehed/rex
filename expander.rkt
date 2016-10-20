@@ -10,6 +10,8 @@
      (display 'PARSE-TREE)
      (display "\n")
      PARSE-TREE
+     (display "\n")
+     (display (gvector->list node-vector))
      ;;(match-input (vector-ref (current-command-line-arguments) 0) 0)
      ))
 (provide (rename-out [rex-module-begin #%module-begin]))
@@ -38,7 +40,7 @@
 ;; stack 2: stack of fallback nodes
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
-      (gvector-add! node-vector '("0" '() -1 #f))
+      (gvector-add! node-vector '("0" () -1 #f))
       (void (fold-funcs '(0 '() '()) (list TRANSITION ...)))))
 (provide implicit-expression)
 
@@ -50,13 +52,13 @@
   #'(lambda (index first-nodes fallbacks)
       (display CHAR)
       (let ([current-node (gvector-ref node-vector index)])
-        (gvector-set! node-vector index '((car current-node)
-                                          (cons '(CHAR (add1 index)) (cadr current-node))
-                                          (caddr current-node)
-                                          (cadddr current-node))))
-      (gvector-add! node-vector '((number->string (add1 index))
-                                  '()
-                                  (car fallbacks);;TODO first number that is not nil 
+        (gvector-set! node-vector index `(,(car current-node)
+                                          ,(cons `(,CHAR ,(add1 index)) (cadr current-node))
+                                          ,(caddr current-node)
+                                          ,(cadddr current-node))))
+      (gvector-add! node-vector `(,(number->string (add1 index))
+                                  ()
+                                  ,(car fallbacks);;TODO first number that is not nil 
                                   #f))
       `(,(add1 index) ,first-nodes ,fallbacks)));; TODO Bug here
 (provide transition)
@@ -83,10 +85,10 @@
   #'(lambda (index first-nodes fallbacks)
       (display "*")
       (let ([current-node (gvector-ref node-vector index)])
-        (gvector-set! node-vector index '((car current-node)
-                                          (cadr current-node)
-                                          '(index)
-                                          (cadddr current-node))))
+        (gvector-set! node-vector index `(,(car current-node)
+                                          ,(cadr current-node)
+                                          ,index
+                                          ,(cadddr current-node))))
       `(,index ,first-nodes ,`(,index))))
 (provide STAR)
 
