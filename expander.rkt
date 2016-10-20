@@ -12,7 +12,8 @@
      PARSE-TREE
      (display "\n")
      (display (gvector->list node-vector))
-     ;;(match-input (vector-ref (current-command-line-arguments) 0) 0)
+     (display "\n")
+     (match-input (vector-ref (current-command-line-arguments) 0) 0)
      ))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
@@ -30,7 +31,7 @@
 
 (define (rex test1 [separator ":"] [test3 (void)])
   test1
-  ;; TODO Resolve references
+  ;; TODO: Resolve references
   test3)
 (provide rex)
 
@@ -41,7 +42,14 @@
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
       (gvector-add! node-vector '("0" () -1 #f))
-      (void (fold-funcs '(0 '() '()) (list TRANSITION ...)))))
+      (void (fold-funcs '(0 '() '()) (list TRANSITION ...)))
+      (let ([index (sub1 (gvector-count node-vector))])
+        (let ([current-node (gvector-ref node-vector index)])
+          (gvector-set! node-vector index `(,(car current-node)
+                                            ,(cadr current-node)
+                                            ,(caddr current-node)
+                                            #t))))))
+
 (provide implicit-expression)
 
 (define-macro (explicit-expression NODE-LINE ...)
@@ -50,7 +58,6 @@
 
 (define-macro (transition CHAR)
   #'(lambda (index first-nodes fallbacks)
-      (display CHAR)
       (let ([current-node (gvector-ref node-vector index)])
         (gvector-set! node-vector index `(,(car current-node)
                                           ,(cons `(,CHAR ,(add1 index)) (cadr current-node))
@@ -58,7 +65,7 @@
                                           ,(cadddr current-node))))
       (gvector-add! node-vector `(,(number->string (add1 index))
                                   ()
-                                  ,(car fallbacks);;TODO first number that is not nil 
+                                  ,(car fallbacks);;TODO: find first number that is not nil 
                                   #f))
       `(,(add1 index) ,first-nodes ,fallbacks)))
 (provide transition)
@@ -81,7 +88,6 @@
 
 (define-macro STAR
   #'(lambda (index first-nodes fallbacks)
-      (display "*")
       (let ([current-node (gvector-ref node-vector index)])
         (gvector-set! node-vector index `(,(car current-node)
                                           ,(cadr current-node)
@@ -95,4 +101,5 @@
 
 (define (match-input string state-index)
   (display string)
+  (display "\n")
   #f)
