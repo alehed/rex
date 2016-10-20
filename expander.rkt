@@ -70,7 +70,7 @@
 (provide transition)
 
 (define (character char)
-  `(,char ,char))
+  `(,(string-ref char 0) ,(string-ref char 0)))
 (provide character)
 
 (define node-identifier
@@ -101,10 +101,18 @@
 (define (match-input string-list state-index)
   (display string-list)
   (display "\n")
-  (if (and (empty? string-list) (cadddr (gvector-ref node-vector state-index))) #t
+  (if (empty? string-list) (if (cadddr (gvector-ref node-vector state-index)) #t
+                               #f)
       (let ([new-state (calculate-new-state (car string-list) state-index)])
         (if (equal? -1 new-state) #f
             (match-input (cdr string-list) new-state)))))
 
 (define (calculate-new-state char current-state)
-  -1)
+  (let ([current-node (gvector-ref node-vector current-state)])
+    (let ([taken-transition (filter (lambda (range)
+                                      (and (char>=? char (car (car range))) (char<=? char (cadr (car range)))))
+                                    (cadr current-node))])
+      (if (equal? 1 (length taken-transition)) (cadar taken-transition)
+          (if (equal? 0 (length taken-transition)) (caddr current-node)
+              (begin (display "Error: Non-deterministic expression")
+              -1))))))
