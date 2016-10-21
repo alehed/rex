@@ -10,7 +10,6 @@
      (display 'PARSE-TREE)
      (display "\n")
      PARSE-TREE
-     (display "\n")
      (display (gvector->list node-vector))
      (display "\n")
      (match-input (string->list (vector-ref (current-command-line-arguments) 0)) 0)))
@@ -21,7 +20,6 @@
 (define (fold-funcs apl funcs)
   (for/fold ([current-apl apl])
             ([func (in-list funcs)])
-    (display current-apl)
     (apply func current-apl)))
 
 (define node-vector (make-gvector #:capacity 20))
@@ -155,7 +153,7 @@
       (cons (resolve-transition (car transitions) names) (resolved-transitions (cdr transitions) names))))
 
 (define (resolve-transition transition names)
-  (if (not (string? cadr)) `(,(car transition) ,(index-of (cadr transition) names))
+  (if (string? (cadr transition)) `(,(car transition) ,(index-of (cadr transition) names))
       transition))
 
 (define (index-of elem list)
