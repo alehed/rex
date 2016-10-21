@@ -23,6 +23,9 @@
     (apply func current-apl)))
 
 (define node-vector (make-gvector #:capacity 20))
+;; A vector containing the following global state flags:
+;; 0: iff the last node should be accepting by default
+(define flags (make-vector 1 #t))
 
 ;; Parse Tree Functions
 
@@ -41,13 +44,7 @@
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
       (gvector-add! node-vector '("0" () -1 #f))
-      (void (fold-funcs '(0 () (-1)) (list TRANSITION ...)))
-      (let ([index (sub1 (gvector-count node-vector))])
-        (let ([current-node (gvector-ref node-vector index)])
-          (gvector-set! node-vector index `(,(car current-node)
-                                            ,(cadr current-node)
-                                            ,(caddr current-node)
-                                            #t))))))
+      (void (fold-funcs '(0 () (-1)) (list TRANSITION ...)))))
 (provide implicit-expression)
 
 (define-macro (transition CHAR)
@@ -78,11 +75,27 @@
 
 (define-macro (explicit-expression NODE-LINE ...)
   #'(begin
-      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))))
+      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))
+      (if (vector-ref flags 0) (let ([index (sub1 (gvector-count node-vector))])
+                                 (let ([current-node (gvector-ref node-vector index)])
+                                   (gvector-set! node-vector index `(,(car current-node)
+                                                                     ,(cadr current-node)
+                                                                     ,(caddr current-node)
+                                                                     #t))))
+          (void))))
 (provide explicit-expression)
 
 (define-macro (node-line TRANSITIONS ...)
     #'(lambda (index)
+        (if (string? (car (list TRANSITIONS ...)))
+            (begin
+              (vector-set! flags 0 #f)
+              (let ([current-node (gvector-ref node-vector index)])
+                (gvector-set! node-vector index `(,(car current-node)
+                                                  ,(cadr current-node)
+                                                  ,(caddr current-node)
+                                                  #t))))
+            (void))
         (void (fold-funcs `(,index) (cdr (filter procedure? (list TRANSITIONS ...)))))
         `(,(add1 index))))
 (provide node-line)
