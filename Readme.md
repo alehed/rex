@@ -55,7 +55,7 @@ will complain and fail.
 
 1. Install [Racket](https://racket-lang.org)
 1. Install the beautiful-racket packet using raco
-```bash
+```shell
 raco pkg install beautiful-racket
 ```
 1. Clone this repository.
