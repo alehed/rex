@@ -28,13 +28,13 @@
   (let ([current-node (gvector-ref node-vector index)])
     (gvector-set! node-vector index `(,(if (string? name) name (car current-node))
                                       ,(if (list? transitions) transitions (cadr current-node))
-                                      ,(if (or (string? fallback) (integer? fallback)) fallback (caddr current-node))
+                                      ,(if (integer? fallback) fallback (caddr current-node))
                                       ,(if (boolean? accepting) accepting (cadddr current-node))))))
 
 (define (add-node name #:transitions [transitions void] #:fallback [fallback void] #:accepting-state? [accepting void])
   (gvector-add! node-vector `(,name
                               ,(if (list? transitions) transitions '())
-                              ,(if (or (string? fallback) (integer? fallback)) fallback -1)
+                              ,(if (integer? fallback) fallback -1)
                               ,(if (boolean? accepting) accepting #f))))
 
 ;; A vector containing the following global state flags:
@@ -45,10 +45,10 @@
 
 (define (rex implicit-part [separator ":"] [explicit-part (void)])
   implicit-part
+  explicit-part
   (resolve-refs (map (lambda (node)
                        (car node))
                      (gvector->list node-vector)))
-  explicit-part
   (if (vector-ref flags 0)
       (let ([index (sub1 (gvector-count node-vector))])
         (update-node index #:accepting-state? #t))
@@ -61,7 +61,7 @@
 ;; stack 2: stack of fallback nodes
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
-      (gvector-add! node-vector '("0" () -1 #f))
+      (add-node "0")
       (void (fold-funcs '(0 () (-1)) (list TRANSITION ...)))))
 (provide implicit-expression)
 
@@ -72,9 +72,10 @@
             (begin ;; in implicit expression
               (update-node index #:transitions (cons `(,CHAR ,(add1 index)) (cadr current-node)))
               (add-node (number->string (add1 index)) #:fallback (car fallbacks)) ;; BUG: fallback: find first number that is not nil
-            `(,(add1 index) ,first-nodes ,fallbacks))
+              `(,(add1 index) ,first-nodes ,fallbacks))
             (begin ;; else (explicit expression)
-              (update-node index #:transitions (cons `(,CHAR) (cadr current-node)))
+              (if (empty? (cdr current-node)) (update-node index #:transitions `(,CHAR))
+                  (update-node index #:transitions (cons `(,CHAR) (cadr current-node))))
               `(,index))))))
 (provide transition)
 
@@ -89,23 +90,26 @@
 
 (define-macro (node-line TRANSITIONS ...)
     #'(lambda (index)
-        ;; () add node if not already existing
+        (if (<= (gvector-count node-vector) index)
+              (add-node (number->string index))
+            (void))
         (if (string? (car (list TRANSITIONS ...)))
             (begin
               (vector-set! flags 0 #f)
               (update-node index #:accepting-state? #t))
             (void))
-        (void (fold-funcs `(,index) (cdr (filter procedure? (list TRANSITIONS ...)))))
+        (void (fold-funcs `(,index) (filter procedure? (list TRANSITIONS ...))))
         `(,(add1 index))))
 (provide node-line)
 
-(define-macro (node-identifier IDENT-LIST)
+(define-macro (node-identifier IDENT ...)
   #'(lambda (index)
       (let ([current-node (gvector-ref node-vector index)])
-        (let ([current-transition (caadr current-node)])
-          (if (equal? 1 (length current-transition))
-              (update-node index #:transitions (cons `(,(car current-transition) ,(string-append IDENT-LIST)) (cdadr current-node)))
-              (update-node index #:name (string-append IDENT-LIST)))));; otherwise we are looking at node naming
+        (if (empty? (cadr current-node)) (update-node index #:name (string-append IDENT ...))
+            (let ([current-transition (caadr current-node)])
+              (if (equal? 1 (length current-transition))
+                  (update-node index #:transitions (cons `(,(car current-transition) ,(string-append IDENT ...)) (cdadr current-node)))
+                    (update-node index #:name (string-append IDENT ...))))));; otherwise we are looking at node naming
       `(,index)))
 (provide node-identifier)
 
@@ -123,7 +127,6 @@
 ;; Expression Matching
 
 (define (match-input string-list state-index)
-  (display state-index)
   (if (empty? string-list) (if (cadddr (gvector-ref node-vector state-index)) #t
                                #f)
       (let ([new-state (calculate-new-state (car string-list) state-index)])
@@ -138,10 +141,10 @@
       (if (equal? 1 (length taken-transition)) (cadar taken-transition)
           (if (equal? 0 (length taken-transition)) (caddr current-node)
               (begin (display "Error: Non-deterministic expression")
-              -1))))))
+                     -1))))))
 
 (define (resolve-refs names)
-  (for/list ([i (in-range (sub1 (gvector-count node-vector)))])
+  (for/list ([i (in-range (gvector-count node-vector))])
     (let ([element (gvector-ref node-vector i)])
       (update-node i #:transitions (resolved-transitions (cadr element) names)))))
 
