@@ -23,6 +23,20 @@
     (apply func current-apl)))
 
 (define node-vector (make-gvector #:capacity 20))
+
+(define (update-node index #:name [name void] #:transitions [transitions void] #:fallback [fallback void] #:accepting-state? [accepting void])
+  (let ([current-node (gvector-ref node-vector index)])
+    (gvector-set! node-vector index `(,(if (string? name) name (car current-node))
+                                      ,(if (list? transitions) transitions (cadr current-node))
+                                      ,(if (or (string? fallback) (integer? fallback)) fallback (caddr current-node))
+                                      ,(if (boolean? accepting) accepting (cadddr current-node))))))
+
+(define (add-node name #:transitions [transitions void] #:fallback [fallback void] #:accepting-state? [accepting void])
+  (gvector-add! node-vector `(,name
+                              ,(if (list? transitions) transitions '())
+                              ,(if (or (string? fallback) (integer? fallback)) fallback -1)
+                              ,(if (boolean? accepting) accepting #f))))
+
 ;; A vector containing the following global state flags:
 ;; 0: iff the last node should be accepting by default
 (define flags (make-vector 1 #t))
@@ -34,7 +48,11 @@
   (resolve-refs (map (lambda (node)
                        (car node))
                      (gvector->list node-vector)))
-  explicit-part)
+  explicit-part
+  (if (vector-ref flags 0)
+      (let ([index (sub1 (gvector-count node-vector))])
+        (update-node index #:accepting-state? #t))
+      (void)))
 (provide rex)
 
 ;; we pass around one index and two stacks
@@ -52,20 +70,11 @@
       (let ([current-node (gvector-ref node-vector index)])
         (if (list? fallbacks)
             (begin ;; in implicit expression
-              (gvector-set! node-vector index `(,(car current-node)
-                                                ,(cons `(,CHAR ,(add1 index)) (cadr current-node)) ;; BUG: modify due to *
-                                                ,(caddr current-node)
-                                                ,(cadddr current-node)))
-              (gvector-add! node-vector `(,(number->string (add1 index))
-                                          ()
-                                          ,(car fallbacks);; BUG: find first number that is not nil 
-                                          #f))
-              `(,(add1 index) ,first-nodes ,fallbacks))
+              (update-node index #:transitions (cons `(,CHAR ,(add1 index)) (cadr current-node)))
+              (add-node (number->string (add1 index)) #:fallback (car fallbacks)) ;; BUG: fallback: find first number that is not nil
+            `(,(add1 index) ,first-nodes ,fallbacks))
             (begin ;; else (explicit expression)
-              (gvector-set! node-vector index `(,(car current-node)
-                                                ,(cons `(,CHAR) (cadr current-node))
-                                                ,(caddr current-node)
-                                                ,(cadddr current-node)))
+              (update-node index #:transitions (cons `(,CHAR) (cadr current-node)))
               `(,index))))))
 (provide transition)
 
@@ -75,26 +84,16 @@
 
 (define-macro (explicit-expression NODE-LINE ...)
   #'(begin
-      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))
-      (if (vector-ref flags 0) (let ([index (sub1 (gvector-count node-vector))])
-                                 (let ([current-node (gvector-ref node-vector index)])
-                                   (gvector-set! node-vector index `(,(car current-node)
-                                                                     ,(cadr current-node)
-                                                                     ,(caddr current-node)
-                                                                     #t))))
-          (void))))
+      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))))
 (provide explicit-expression)
 
 (define-macro (node-line TRANSITIONS ...)
     #'(lambda (index)
+        ;; () add node if not already existing
         (if (string? (car (list TRANSITIONS ...)))
             (begin
               (vector-set! flags 0 #f)
-              (let ([current-node (gvector-ref node-vector index)])
-                (gvector-set! node-vector index `(,(car current-node)
-                                                  ,(cadr current-node)
-                                                  ,(caddr current-node)
-                                                  #t))))
+              (update-node index #:accepting-state? #t))
             (void))
         (void (fold-funcs `(,index) (cdr (filter procedure? (list TRANSITIONS ...)))))
         `(,(add1 index))))
@@ -105,16 +104,8 @@
       (let ([current-node (gvector-ref node-vector index)])
         (let ([current-transition (caadr current-node)])
           (if (equal? 1 (length current-transition))
-              (begin
-                (gvector-set! node-vector index `(,(car current-node)
-                                                  ,(cons `(,(car current-transition) ,(string-append IDENT-LIST)) (cdadr current-node))
-                                                  ,(caddr current-node)
-                                                  ,(cadddr current-node))))
-              (begin ;; otherwise we are looking at node naming
-                (gvector-set! node-vector index `(,(string-append IDENT-LIST)
-                                                  ,(cadr current-node)
-                                                  ,(caddr current-node)
-                                                  ,(cadddr current-node)))))))
+              (update-node index #:transitions (cons `(,(car current-transition) ,(string-append IDENT-LIST)) (cdadr current-node)))
+              (update-node index #:name (string-append IDENT-LIST)))));; otherwise we are looking at node naming
       `(,index)))
 (provide node-identifier)
 
@@ -124,11 +115,7 @@
 
 (define-macro STAR
   #'(lambda (index first-nodes fallbacks)
-      (let ([current-node (gvector-ref node-vector index)])
-        (gvector-set! node-vector index `(,(car current-node)
-                                          ,(cadr current-node)
-                                          ,index
-                                          ,(cadddr current-node))))
+      (update-node index #:fallback index)
       `(,index ,first-nodes ,`(,index))))
 (provide STAR)
 
@@ -156,10 +143,7 @@
 (define (resolve-refs names)
   (for/list ([i (in-range (sub1 (gvector-count node-vector)))])
     (let ([element (gvector-ref node-vector i)])
-      (gvector-set! node-vector i `(,(car element)
-                                    ,(resolved-transitions (cadr element) names)
-                                    ,(caddr element)
-                                    ,(cadddr element))))))
+      (update-node i #:transitions (resolved-transitions (cadr element) names)))))
 
 (define (resolved-transitions transitions names)
   (if (empty? transitions) '()
