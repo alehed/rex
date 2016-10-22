@@ -29,15 +29,15 @@ Regular expressions are easily translated into non-deterministic finite
 automata (NFA), while a computer can only execute deterministic finite state
 machines (DFA). The two are mathematically equivalent and can be converted into
 one another, but at a price: To convert an NFA into a DFA the number of states
-in the DFA will be O(2^n) in the worst case. This makes execution times
+in the DFA will be O(2^(n)) in the worst case. This makes execution times
 unpredictable for the person writing the expression. So conversion from a NFA
 to a DFA is hard and expensive.
 
 The other way around is similar: if we have an arbitrary DFA and we want to get
 a regular expression from it, conversion is also hard and the length of the
-regular expression is O(2^n) in the worst case (where n is the number of states
-in the DFA). This time you probably get a fast regex but it's really hard to
-write it.
+regular expression is O(2^(n)) in the worst case (where n is the number of
+states in the DFA). This time you probably get a fast regex but it's really
+hard to write it.
 
 And there are extensions to regular expressions that are implemented by some
 engines that take them into the area of context-sensitive languages which makes
