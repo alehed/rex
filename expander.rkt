@@ -58,21 +58,21 @@
 ;; we pass around one index and two stacks
 ;; index 1: The current node it is at (index into node-vector)
 ;; stack 1: stack of first nodes
-;; stack 2: stack of fallback nodes
+;; stack 2: the current fallback node
 (define-macro (implicit-expression TRANSITION ...)
   #'(begin
       (add-node "0")
-      (void (fold-funcs '(0 () (-1)) (list TRANSITION ...)))))
+      (void (fold-funcs '(0 () -1) (list TRANSITION ...)))))
 (provide implicit-expression)
 
 (define-macro (transition CHAR)
-  #'(lambda (index [first-nodes void] [fallbacks void])
+  #'(lambda (index [first-nodes void] [fallback void])
       (let ([current-node (gvector-ref node-vector index)])
-        (if (list? fallbacks)
+        (if (integer? fallback)
             (begin ;; in implicit expression
               (update-node index #:transitions (cons `(,CHAR ,(add1 index)) (cadr current-node)))
-              (add-node (number->string (add1 index)) #:fallback (car fallbacks)) ;; BUG: fallback: find first number that is not nil
-              `(,(add1 index) ,first-nodes ,fallbacks))
+              (add-node (number->string (add1 index)) #:fallback fallback)
+              `(,(add1 index) ,first-nodes ,fallback))
             (begin ;; else (explicit expression)
               (if (empty? (cdr current-node)) (update-node index #:transitions `(,CHAR))
                   (update-node index #:transitions (cons `(,CHAR) (cadr current-node))))
@@ -118,9 +118,9 @@
 (provide GLOB)
 
 (define-macro STAR
-  #'(lambda (index first-nodes fallbacks)
+  #'(lambda (index first-nodes fallback)
       (update-node index #:fallback index)
-      `(,index ,first-nodes ,`(,index))))
+      `(,index ,first-nodes ,index)))
 (provide STAR)
 
 
