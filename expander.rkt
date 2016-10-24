@@ -81,8 +81,8 @@
               (add-node (number->string (add1 index)) #:fallback fallback)
               `(,(add1 index) ,first-nodes ,fallback))
             (begin ;; else (explicit expression)
-              (if (empty? (cdr current-node)) (update-node index #:transitions CHAR)
-                  (update-node index #:transitions (append `(,CHAR) (cadr current-node))))
+              (update-node index #:transitions (append (map (lambda (pair)
+                                                              `(,pair)) CHAR) (cadr current-node)))
               `(,index))))))
 (provide transition)
 
@@ -119,12 +119,12 @@
 
 (define-macro (node-identifier IDENT ...)
   #'(lambda (index)
-      (let ([current-node (gvector-ref node-vector index)])
-        (if (empty? (cadr current-node)) (update-node index #:name (string-append IDENT ...))
-            (let ([current-transition (caadr current-node)])
-              (if (equal? 1 (length current-transition))
-                  (update-node index #:transitions (cons `(,(car current-transition) ,(string-append IDENT ...)) (cdadr current-node)))
-                    (update-node index #:name (string-append IDENT ...))))));; otherwise we are looking at node naming
+      (let ([current-transitions (cadr (gvector-ref node-vector index))])
+        (if (empty? current-transitions) (update-node index #:name (string-append IDENT ...))
+            (update-node index #:transitions (map (lambda (transition)
+                                                    (if (equal? 2 (length transition)) transition
+                                                        `(,(car transition) ,(string-append IDENT ...))))
+                                                  current-transitions))))
       `(,index)))
 (provide node-identifier)
 
