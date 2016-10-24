@@ -80,7 +80,7 @@
 (provide transition)
 
 (define (character char)
-  `(,(string-ref char 0) ,(string-ref char 0)))
+    `(,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char)))))
 (provide character)
 
 (define-macro (explicit-expression NODE-LINE ...)
