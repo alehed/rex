@@ -70,6 +70,23 @@
       (apply CONTENT `(,index ,first-nodes ,fallback))))
 (provide limited-expression)
 
+(define-macro (sub-expression EXPR-CONTENT ...)
+  #'(lambda (index first-nodes fallback)
+      ;; TODO: STUB
+      `(,index ,first-nodes ,fallback))
+(provide sub-expression)
+
+(define-macro (loop LOOP-CONTENT ...)
+  #'(lambda (index first-nodes fallback)
+      ;; TODO: STUB
+      `(,index ,first-nodes ,fallback))
+(provide loop)
+
+(define (or pipe)
+  ;; TODO: STUB
+  void)
+(provide or)
+
 (define-macro (transition CHAR)
   #'(lambda (index [first-nodes void] [fallback void])
       (let ([current-node (gvector-ref node-vector index)])
