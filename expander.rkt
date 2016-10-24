@@ -82,12 +82,20 @@
 (provide transition)
 
 (define (character char)
-    `((,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char))))))
+    `((,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char))))));; BUG: \t and \n escape sequences not recognized
 (provide character)
 
+(define-macro (range SPAN ...)
+  #'(filter list? (list SPAN ...)))
+(provide range)
+
+(define (span from-char [to "-"] [to-char void])
+  (if (list? to-char) `(,(caar from-char) ,(caar to-char))
+      (car from-char)))
+(provide span)
+
 (define-macro (explicit-expression NODE-LINE ...)
-  #'(begin
-      (void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))))
+  #'(void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...)))))
 (provide explicit-expression)
 
 (define-macro (node-line TRANSITIONS ...)
@@ -142,7 +150,7 @@
                                     (cadr current-node))])
       (if (equal? 1 (length taken-transition)) (cadar taken-transition)
           (if (equal? 0 (length taken-transition)) (caddr current-node)
-              (begin (display "Error: Non-deterministic expression")
+              (begin (error "Non-deterministic expression")
                      -1))))))
 
 (define (resolve-refs names)
