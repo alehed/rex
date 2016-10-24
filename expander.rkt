@@ -70,7 +70,9 @@
       (let ([current-node (gvector-ref node-vector index)])
         (if (integer? fallback)
             (begin ;; in implicit expression
-              (update-node index #:transitions (cons `(,CHAR ,(add1 index)) (cadr current-node)))
+              (update-node index #:transitions (append (map (lambda (pair)
+                                                            `(,pair ,(add1 index))) CHAR)
+                                                     (cadr current-node)))
               (add-node (number->string (add1 index)) #:fallback fallback)
               `(,(add1 index) ,first-nodes ,fallback))
             (begin ;; else (explicit expression)
@@ -80,7 +82,7 @@
 (provide transition)
 
 (define (character char)
-    `(,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char)))))
+    `((,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char))))))
 (provide character)
 
 (define-macro (explicit-expression NODE-LINE ...)
@@ -114,7 +116,7 @@
 (provide node-identifier)
 
 (define GLOB
-  `(,(integer->char 0) ,(integer->char 256)))
+  `((,(integer->char 0) ,(integer->char 256))))
 (provide GLOB)
 
 (define-macro STAR
