@@ -1,6 +1,6 @@
 # rex
 
-Still a work in progress, not all features are implemented yet.
+A proof of concept implementation of a language to describe DFAs.
 
 
 ## What is wrong with regexes?
@@ -118,10 +118,10 @@ This recognizes strings of even length.
 
 ### Caveats
 
-The \* and . was added to provide short usefulness expressions, but as opposed.
-They don't work as you would expect. The . does what you would expect but it
-has to be the only transition going out of the state, otherwise it will
-complain about a non-deterministic expression.
+The \* and . were added to provide short useful expressions, but as opposed
+to real regexes, they don't work the way you would expect them to. The . does
+what you would think but it has to be the only transition going out of the state,
+otherwise it will complain about a non-deterministic expression and fail.
 
 The problem of the \* is more subtle. It controls the fail-state. Instead of
 failing, the expression simply goes to the last \*. This seems reasonable but
