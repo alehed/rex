@@ -126,13 +126,13 @@ otherwise it will complain about a non-deterministic expression and fail.
 The problem of the \* is more subtle. It controls the fail-state. Instead of
 failing, the expression simply goes to the last \*. This seems reasonable but
 is not the same behavior as a normal wildcard. For instance `*banana*` will not
-match "bbanana"! The problem is that wildcard are inherently non-deterministic
+match "bbanana"! The problem is that wildcards are inherently non-deterministic
 and this is the only way I see to include support for them.
 
 I am not sure whether it is a good idea or not to make the default behavior
-match single character loops (like in bbbbanana) but not multiple character
+match single character loops (like in bbbbanana), but not multiple character
 loops (like in anananas with `*ananas`). Right now, I'm leaning towards not
-**really** surprising the user vs making the default case easy.
+**really** surprising the user vs. making the default case easy.
 
 
 ## Future

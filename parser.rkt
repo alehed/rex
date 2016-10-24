@@ -3,8 +3,13 @@
 ;; A parser for R-Expressions
 
 rex                 : implicit-expression [ ":" explicit-expression ]
-implicit-expression : [STAR] (transition [STAR])*
+implicit-expression : [STAR] (limited-expression [STAR])*
 explicit-expression : node-line ("," node-line)*
+
+limited-expression  : transition | loop | sub-expression
+sub-expression      : "(" (limited-expression | or)+ ")"
+loop                : "{" (limited-expression)+ "}"
+or                  : "|"
 
 node-line           : ["="] node-identifier (transition "-" ">" node-identifier)*
 node-identifier     : (NUMBER | ALPHA | PUNCTUATION)+

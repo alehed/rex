@@ -59,11 +59,16 @@
 ;; index 1: The current node it is at (index into node-vector)
 ;; stack 1: stack of first nodes
 ;; stack 2: the current fallback node
-(define-macro (implicit-expression TRANSITION ...)
+(define-macro (implicit-expression LIMITED-EXP ...)
   #'(begin
       (add-node "0")
-      (void (fold-funcs '(0 () -1) (list TRANSITION ...)))))
+      (void (fold-funcs '(0 () -1) (list LIMITED-EXP ...)))))
 (provide implicit-expression)
+
+(define-macro (limited-expression CONTENT)
+  #'(lambda (index first-nodes fallback)
+      (apply CONTENT `(,index ,first-nodes ,fallback))))
+(provide limited-expression)
 
 (define-macro (transition CHAR)
   #'(lambda (index [first-nodes void] [fallback void])
@@ -76,8 +81,8 @@
               (add-node (number->string (add1 index)) #:fallback fallback)
               `(,(add1 index) ,first-nodes ,fallback))
             (begin ;; else (explicit expression)
-              (if (empty? (cdr current-node)) (update-node index #:transitions `(,CHAR))
-                  (update-node index #:transitions (cons `(,CHAR) (cadr current-node))))
+              (if (empty? (cdr current-node)) (update-node index #:transitions CHAR)
+                  (update-node index #:transitions (append `(,CHAR) (cadr current-node))))
               `(,index))))))
 (provide transition)
 
