@@ -10,6 +10,7 @@
      (display 'PARSE-TREE)
      (display "\n")
      PARSE-TREE
+     (display "\n")
      (display (gvector->list node-vector))
      (display "\n")
      (match-input (string->list (vector-ref (current-command-line-arguments) 0)) 0)))
@@ -20,6 +21,7 @@
 (define (fold-funcs apl funcs)
   (for/fold ([current-apl apl])
             ([func (in-list funcs)])
+    (display current-apl)
     (apply func current-apl)))
 
 (define node-vector (make-gvector #:capacity 20))
@@ -50,7 +52,7 @@
                        (car node))
                      (gvector->list node-vector)))
   (if (vector-ref flags 0)
-      (let ([index (sub1 (gvector-count node-vector))])
+      (let ([index (sub1 (gvector-count node-vector))]) ;; TODO: multiple end states
         (update-node index #:accepting-state? #t))
       (void)))
 (provide rex)
@@ -73,8 +75,10 @@
 
 (define-macro (sub-expression EXPR-CONTENT ...)
   #'(lambda (index first-nodes last-nodes fallback)
-      (let ([new-index (car (fold-funcs `(,index ,(cons index first-nodes) ,last-nodes ,fallback) (list EXPR-CONTENT ...)))])
-        `(,new-index ,first-nodes (#t (cons index ,last-nodes)) ,fallback))))
+      (let ([new-data
+             (fold-funcs `(,index ,(cons `(,index) first-nodes) ,last-nodes ,fallback)
+                         (filter procedure? (list EXPR-CONTENT ...)))])
+        `(,(car new-data) ,(cadr new-data) (#t ,(caddr new-data)) ,(cadddr new-data)))))
 (provide sub-expression)
 
 (define-macro (loop LOOP-CONTENT ...)
@@ -100,16 +104,26 @@
       (let ([current-node (gvector-ref node-vector index)])
         (if (integer? fallback)
             (begin ;; in implicit expression
-              (update-node index #:transitions (append (map (lambda (pair)
-                                                            `(,pair ,(add1 index))) CHAR)
-                                                     (cadr current-node)))
-              (add-node (number->string (add1 index)) #:fallback fallback)
-              `(,(add1 index) ,first-nodes ,last-nodes ,fallback))
+              (let ([nodes-to-combine (leaf-nodes index last-nodes)])
+                (for ([i (cadr nodes-to-combine)])
+                  (update-node i #:transitions (append (map (lambda (pair)
+                                                              `(,pair ,(add1 index))) CHAR)
+                                                       (cadr (gvector-ref node-vector i)))))
+                (add-node (number->string (add1 index)) #:fallback fallback)
+                (if (car nodes-to-combine)
+                    `(,(add1 index) ,(cdr first-nodes) ,(caddr nodes-to-combine) ,fallback)
+                    `(,(add1 index) ,first-nodes ,(caddr nodes-to-combine) ,fallback))))
             (begin ;; in explicit expression
               (update-node index #:transitions (append (map (lambda (pair)
                                                               `(,pair)) CHAR) (cadr current-node)))
               `(,index))))))
 (provide transition)
+
+;; returns (true if we are closing a scope, the indexes that are dangling, the new last-nodes list)
+(define (leaf-nodes current-index last-nodes)
+  (if (not (and (not (empty? last-nodes)) (boolean? (car last-nodes)))) `(#f (,current-index) ,last-nodes)
+      (let ([result (leaf-nodes current-index (cddr last-nodes))])
+        `(#t ,(append (cadr last-nodes) (cadr result)) ,(caddr result)))))
 
 (define GLOB
   `((,(integer->char 0) ,(integer->char 256))))
