@@ -15,7 +15,7 @@
      (match-input (string->list (vector-ref (current-command-line-arguments) 0)) 0)))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
-;; Expression Generation
+;; Expression Generation Helpers
 
 (define (fold-funcs apl funcs)
   (for/fold ([current-apl apl])
@@ -55,31 +55,33 @@
       (void)))
 (provide rex)
 
-;; we pass around one index and two stacks
-;; index 1: The current node it is at (index into node-vector)
-;; stack 1: stack of first nodes
-;; stack 2: the current fallback node
+;; for creation we pass around two indexes and two stacks:
+;; index: The current node it is at
+;; stack: stack of first nodes
+;; stack: stack of last nodes
+;; index: the current fallback node
 (define-macro (implicit-expression LIMITED-EXP ...)
   #'(begin
       (add-node "0")
-      (void (fold-funcs '(0 () -1) (list LIMITED-EXP ...)))))
+      (void (fold-funcs '(0 () () -1) (list LIMITED-EXP ...)))))
 (provide implicit-expression)
 
 (define-macro (limited-expression CONTENT)
-  #'(lambda (index first-nodes fallback)
-      (apply CONTENT `(,index ,first-nodes ,fallback))))
+  #'(lambda (index first-nodes last-nodes fallback)
+      (apply CONTENT `(,index ,first-nodes ,last-nodes ,fallback))))
 (provide limited-expression)
 
 (define-macro (sub-expression EXPR-CONTENT ...)
-  #'(lambda (index first-nodes fallback)
-      ;; TODO: STUB
-      `(,index ,first-nodes ,fallback))
+  #'(lambda (index first-nodes last-nodes fallback)
+      (let ([new-index (car (fold-funcs `(,index ,(cons index first-nodes) ,last-nodes ,fallback) (list EXPR-CONTENT ...)))])
+        `(,new-index ,first-nodes (#t (cons index ,last-nodes)) ,fallback))))
 (provide sub-expression)
 
 (define-macro (loop LOOP-CONTENT ...)
-  #'(lambda (index first-nodes fallback)
+  #'(lambda (index first-nodes last-nodes fallback)
       ;; TODO: STUB
-      `(,index ,first-nodes ,fallback))
+      ;; TODO: link up
+      `(,index ,first-nodes ,last-nodes ,fallback)))
 (provide loop)
 
 (define (or pipe)
@@ -87,8 +89,14 @@
   void)
 (provide or)
 
+(define-macro STAR
+  #'(lambda (index first-nodes last-nodes fallback)
+      (update-node index #:fallback index)
+      `(,index ,first-nodes ,last-nodes ,index)))
+(provide STAR)
+
 (define-macro (transition CHAR)
-  #'(lambda (index [first-nodes void] [fallback void])
+  #'(lambda (index [first-nodes void] [last-nodes void] [fallback void])
       (let ([current-node (gvector-ref node-vector index)])
         (if (integer? fallback)
             (begin ;; in implicit expression
@@ -96,15 +104,20 @@
                                                             `(,pair ,(add1 index))) CHAR)
                                                      (cadr current-node)))
               (add-node (number->string (add1 index)) #:fallback fallback)
-              `(,(add1 index) ,first-nodes ,fallback))
-            (begin ;; else (explicit expression)
+              `(,(add1 index) ,first-nodes ,last-nodes ,fallback))
+            (begin ;; in explicit expression
               (update-node index #:transitions (append (map (lambda (pair)
                                                               `(,pair)) CHAR) (cadr current-node)))
               `(,index))))))
 (provide transition)
 
+(define GLOB
+  `((,(integer->char 0) ,(integer->char 256))))
+(provide GLOB)
+
 (define (character char)
-    `((,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char))))));; BUG: \t and \n escape sequences not recognized
+    `((,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char))))))
+;; BUG: \t and \n escape sequences recognized as t and n respectively
 (provide character)
 
 (define-macro (range SPAN ...)
@@ -144,16 +157,6 @@
                                                   current-transitions))))
       `(,index)))
 (provide node-identifier)
-
-(define GLOB
-  `((,(integer->char 0) ,(integer->char 256))))
-(provide GLOB)
-
-(define-macro STAR
-  #'(lambda (index first-nodes fallback)
-      (update-node index #:fallback index)
-      `(,index ,first-nodes ,index)))
-(provide STAR)
 
 
 ;; Expression Matching
