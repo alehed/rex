@@ -46,15 +46,15 @@
 ;; Parse Tree Functions
 
 (define (rex implicit-part [separator ":"] [explicit-part (void)])
-  implicit-part
-  explicit-part
-  (resolve-refs (map (lambda (node)
-                       (car node))
-                     (gvector->list node-vector)))
-  (if (vector-ref flags 0)
-      (let ([index (sub1 (gvector-count node-vector))]) ;; TODO: multiple end states
-        (update-node index #:accepting-state? #t))
-      (void)))
+  (let ([implicit-result implicit-part])
+    explicit-part
+    (resolve-refs (map (lambda (node)
+                         (car node))
+                       (gvector->list node-vector)))
+    (if (vector-ref flags 0)
+        (for ([i (cadr (leaf-nodes (caadr implicit-result) (caddr implicit-result)))])
+          (update-node i #:accepting-state? #t))
+        (void))))
 (provide rex)
 
 ;; for creation we pass around two indexes and two stacks:
@@ -65,7 +65,7 @@
 (define-macro (implicit-expression LIMITED-EXP ...)
   #'(begin
       (add-node "0")
-      (void (fold-funcs '(0 (0) () -1) (list LIMITED-EXP ...)))))
+      (fold-funcs '(0 (0) () -1) (list LIMITED-EXP ...))))
 (provide implicit-expression)
 
 (define-macro (limited-expression CONTENT)
