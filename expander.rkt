@@ -58,14 +58,14 @@
 (provide rex)
 
 ;; for creation we pass around two indexes and two stacks:
-;; index: The current node it is at
-;; stack: stack of first nodes
-;; stack: stack of last nodes
-;; index: the current fallback node
+;; index: The current node it is at: 11
+;; stack: stack of first nodes: (10 9 7 5)
+;; stack: stack of last nodes: ((8 9) (3 7)) or (#t (8 9) (3 7)) if it has to be reduced
+;; index: the current fallback node: 0
 (define-macro (implicit-expression LIMITED-EXP ...)
   #'(begin
       (add-node "0")
-      (void (fold-funcs '(0 () () -1) (list LIMITED-EXP ...)))))
+      (void (fold-funcs '(0 (0) () -1) (list LIMITED-EXP ...)))))
 (provide implicit-expression)
 
 (define-macro (limited-expression CONTENT)
@@ -76,7 +76,7 @@
 (define-macro (sub-expression EXPR-CONTENT ...)
   #'(lambda (index first-nodes last-nodes fallback)
       (let ([new-data
-             (fold-funcs `(,index ,(cons `(,index) first-nodes) ,last-nodes ,fallback)
+             (fold-funcs `(,index ,(cons index first-nodes) ,(cons '() last-nodes) ,fallback)
                          (filter procedure? (list EXPR-CONTENT ...)))])
         `(,(car new-data) ,(cadr new-data) (#t ,(caddr new-data)) ,(cadddr new-data)))))
 (provide sub-expression)
@@ -88,9 +88,12 @@
       `(,index ,first-nodes ,last-nodes ,fallback)))
 (provide loop)
 
-(define (or pipe)
-  ;; TODO: STUB
-  void)
+(define-macro (or "|")
+  #'(lambda (index first-nodes last-nodes fallback)
+      `(,index
+        ,(cons (cadr first-nodes) (cdr first-nodes))
+        ,(cons (cons index (car last-nodes)) (cdr last-nodes))
+        ,fallback)))
 (provide or)
 
 (define-macro STAR
@@ -104,15 +107,15 @@
       (let ([current-node (gvector-ref node-vector index)])
         (if (integer? fallback)
             (begin ;; in implicit expression
-              (let ([nodes-to-combine (leaf-nodes index last-nodes)])
+              (let ([nodes-to-combine (leaf-nodes (car first-nodes) last-nodes)])
                 (for ([i (cadr nodes-to-combine)])
                   (update-node i #:transitions (append (map (lambda (pair)
                                                               `(,pair ,(add1 index))) CHAR)
                                                        (cadr (gvector-ref node-vector i)))))
                 (add-node (number->string (add1 index)) #:fallback fallback)
                 (if (car nodes-to-combine)
-                    `(,(add1 index) ,(cdr first-nodes) ,(caddr nodes-to-combine) ,fallback)
-                    `(,(add1 index) ,first-nodes ,(caddr nodes-to-combine) ,fallback))))
+                    `(,(add1 index) ,(cons (add1 index) (cddr first-nodes)) ,(caddr nodes-to-combine) ,fallback)
+                    `(,(add1 index) ,(cons (add1 index) (cdr first-nodes)) ,(caddr nodes-to-combine) ,fallback))))
             (begin ;; in explicit expression
               (update-node index #:transitions (append (map (lambda (pair)
                                                               `(,pair)) CHAR) (cadr current-node)))
@@ -123,7 +126,7 @@
 (define (leaf-nodes current-index last-nodes)
   (if (not (and (not (empty? last-nodes)) (boolean? (car last-nodes)))) `(#f (,current-index) ,last-nodes)
       (let ([result (leaf-nodes current-index (cddr last-nodes))])
-        `(#t ,(append (cadr last-nodes) (cadr result)) ,(caddr result)))))
+        `(#t ,(append (caadr last-nodes) (cadr result)) ,(caddr result)))))
 
 (define GLOB
   `((,(integer->char 0) ,(integer->char 256))))
