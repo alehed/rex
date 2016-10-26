@@ -60,7 +60,7 @@
 ;; for creation we pass around two indexes and two stacks:
 ;; index: The current node it is at: 11
 ;; stack: stack of first nodes: (10 9 7 5)
-;; stack: stack of last nodes: ((8 9) (3 7)) or (#t (8 9) (3 7)) if it has to be reduced
+;; stack: stack of last nodes: ((8 9) (3 7)) or ((#t) (#t) (8 9) (3 7)) if it has to be reduced
 ;; index: the current fallback node: 0
 (define-macro (implicit-expression LIMITED-EXP ...)
   #'(begin
@@ -78,7 +78,7 @@
       (let ([new-data
              (fold-funcs `(,index ,(cons index first-nodes) ,(cons '() last-nodes) ,fallback)
                          (filter procedure? (list EXPR-CONTENT ...)))])
-        `(,(car new-data) ,(cadr new-data) (#t ,(caddr new-data)) ,(cadddr new-data)))))
+        `(,(car new-data) ,(cadr new-data) ,(cons '(#t) (caddr new-data)) ,(cadddr new-data)))))
 (provide sub-expression)
 
 (define-macro (loop LOOP-CONTENT ...)
@@ -122,11 +122,12 @@
               `(,index))))))
 (provide transition)
 
+;; nums is for internal use
 ;; returns (true if we are closing a scope, the indexes that are dangling, the new last-nodes list)
-(define (leaf-nodes current-index last-nodes)
-  (if (not (and (not (empty? last-nodes)) (boolean? (car last-nodes)))) `(#f (,current-index) ,last-nodes)
-      (let ([result (leaf-nodes current-index (cddr last-nodes))])
-        `(#t ,(append (caadr last-nodes) (cadr result)) ,(caddr result)))))
+(define (leaf-nodes current-index last-nodes [nums 0])
+  (if (not (and (not (empty? last-nodes)) (not (empty? (car last-nodes))) (boolean? (caar last-nodes))))
+      `(#f ,(flatten `(,current-index ,(take last-nodes nums))) ,(drop last-nodes nums))
+      (cons #t (cdr (leaf-nodes current-index (cdr last-nodes) (add1 nums))))))
 
 (define GLOB
   `((,(integer->char 0) ,(integer->char 256))))
