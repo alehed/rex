@@ -1,28 +1,44 @@
 #lang br/quicklang
 
+(require racket/cmdline)
 (require data/gvector)
 
 ;; module begin
 
 (define-macro (rex-module-begin PARSE-TREE)
   #'(#%module-begin
-     (display "Welcome to rex!\n")
-     (display 'PARSE-TREE)
-     (display "\n")
-     PARSE-TREE
-     (display "\n")
-     (display (gvector->list node-vector))
-     (display "\n")
-     (match-input (string->list (vector-ref (current-command-line-arguments) 0)) 0)))
+     (let ([to-match (command-line #:program "rex"
+                                      #:once-each
+                                      [("--tree" "-t") "print the parse tree" (vector-set! flags 1 #t)]
+                                      [("--nodes" "-n") "display the nodes" (vector-set! flags 2 #t)]
+                                      [("--debug" "-d") "show debugging ouput" (vector-set! flags 3 #t)]
+                                      #:args string-to-parse string-to-parse)])
+       (if (vector-ref flags 1) (begin
+                                  (display 'PARSE-TREE)
+                                  (display "\n"))
+           (void))
+       PARSE-TREE
+       (if (vector-ref flags 3) (display "\n") (void))
+       (if (vector-ref flags 2) (begin
+                                  (display (gvector->list node-vector))
+                                  (display "\n"))
+           (void))
+       (if (and (empty? to-match) (not (vector-ref flags 1)) (not (vector-ref flags 2)) (not (vector-ref flags 3)))
+           (display "Please give a string to match or consult the help using --help\n")
+           (void))
+       (for ([current-string to-match])
+         (match-input current-string 0)))))
 (provide (rename-out [rex-module-begin #%module-begin]))
+
 
 ;; Expression Generation Helpers
 
-(define (fold-funcs apl funcs)
-  (for/fold ([current-apl apl])
-            ([func (in-list funcs)])
-    (display current-apl)
-    (apply func current-apl)))
+;; A vector containing the following global state flags:
+;; 0: prevent the last node from being accepting
+;; 1: print the parse tree
+;; 2: print the nodes
+;; 3: print the intermediate steps
+(define flags (make-vector 4 #f))
 
 (define node-vector (make-gvector #:capacity 20))
 
@@ -39,9 +55,13 @@
                               ,(if (integer? fallback) fallback -1)
                               ,(if (boolean? accepting) accepting #f))))
 
-;; A vector containing the following global state flags:
-;; 0: iff the last node should be accepting by default
-(define flags (make-vector 1 #t))
+(define (fold-funcs apl funcs)
+  (for/fold ([current-apl apl])
+            ([func (in-list funcs)])
+    (if (vector-ref flags 3) (display current-apl)
+        (void))
+    (apply func current-apl)))
+
 
 ;; Parse Tree Functions
 
@@ -51,7 +71,7 @@
     (resolve-refs (map (lambda (node)
                          (car node))
                        (gvector->list node-vector)))
-    (if (vector-ref flags 0)
+    (if (not (vector-ref flags 0))
         (for ([i (cadr (leaf-nodes (caadr implicit-result) (caddr implicit-result)))])
           (update-node i #:accepting-state? #t))
         (void))))
@@ -158,7 +178,7 @@
             (void))
         (if (string? (car (list TRANSITIONS ...)))
             (begin
-              (vector-set! flags 0 #f)
+              (vector-set! flags 0 #t)
               (update-node index #:accepting-state? #t))
             (void))
         (void (fold-funcs `(,index) (filter procedure? (list TRANSITIONS ...))))
