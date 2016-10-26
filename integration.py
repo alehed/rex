@@ -43,12 +43,26 @@ test("test-ranges.rkt", ["password9", "passworg1", "passwort!", "passwortN"], "#
 
 test("test-special-characters.rkt", ["Hello World!", "HelloWorld!"], "#t #f")
 
+test("test-basic-branch.rkt", ["abd", "acd", "aed", "aad"], "#t #t #f #f")
 
 # Advanced functionality tests
 
 test("test-parser-1.rkt", ["10001111", "0001", "10", "1111"], "#t #t #f #t")
 
 test("test-parser-2.rkt", ["-n"], "((0 (((a a) 1)) -1 #f) (1 (((b b) 2)) -1 #f) (2 (((c c) 3)) -1 #f) (3 (((f f) 1) ((d d) 1) ((e e) 1) ((g g) 4)) -1 #f) (4 () -1 #t))")
+
+test("test-nested-parens.rkt", ["-n"], "((0 (((b b) 1)) -1 #f) (1 () -1 #t))")
+
+test("test-multi-branch.rkt", ["-n"], "((0 (((a a) 1)) -1 #f) (1 (((b b) 2)) -1 #f) (2 (((c c) 3)) -1 #f) (3 (((b b) 4)) -1 #t) (4 (((c c) 5)) -1 #f) (5 (((d d) 6)) -1 #f) (6 (((g g) 9) ((e e) 7)) -1 #f) (7 (((f f) 8)) -1 #f) (8 () -1 #t) (9 (((h h) 10)) -1 #f) (10 () -1 #t))")
+
+# Tests for Branches
+
+test("test-three-branch.rkt", ["a", "b", "c", "", "d", "ab"], "#t #t #t #f #f #f")
+
+test("test-epsilon.rkt", ["a", "ab", "ag", "aa", "ba"], "#t #t #t #f #f")
+
+
+# Tests for Loops
 
 
 
