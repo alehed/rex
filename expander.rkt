@@ -23,12 +23,13 @@
                                   (display (gvector->list node-vector))
                                   (display "\n"))
            (void))
-       (if (and (empty? to-match) (not (vector-ref flags 1)) (not (vector-ref flags 2)) (not (vector-ref flags 3)))
-           (display "Please give a string to match or consult the help using --help\n")
-           (void))
        (for ([current-string to-match])
          (display (match-input (string->list current-string) 0))
-         (display "\n")))))
+         (display " "))
+       ;; if nothing done print error
+       (if (and (empty? to-match) (not (vector-ref flags 1)) (not (vector-ref flags 2)) (not (vector-ref flags 3)))
+           (display "Please give a string to match or consult the help using --help\n")
+           (display "\n")))))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
 
