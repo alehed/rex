@@ -27,7 +27,8 @@
            (display "Please give a string to match or consult the help using --help\n")
            (void))
        (for ([current-string to-match])
-         (match-input current-string 0)))))
+         (display (match-input (string->list current-string) 0))
+         (display "\n")))))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
 
