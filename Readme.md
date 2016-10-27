@@ -57,6 +57,7 @@ directly generates a DFA, it will complain and fail.
 1. Install the beautiful-racket packet using raco: `raco pkg install beautiful-racket`
 1. Clone this repository
 1. Enter the repository: `cd rex`
+1. Make sure everything works by executing the unit tests: `./tests/integration.py -v`
 1. Install it as a package using raco: `raco pkg install`
 1. Enjoy
 
@@ -158,8 +159,7 @@ loops (like in anananas with `*ananas`). Right now, I'm leaning towards not
 Just fork away, PRs welcome.
 
 There is a test suite as a python script that can be executed with
-`python integration.py -v`.
-
+`./tests/integration.py`.
 Be sure to run the full test suite before every commit and always introduce new
 tests with new features.
 
