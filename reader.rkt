@@ -1,13 +1,12 @@
 #lang br/quicklang
 
 (require "parser.rkt")
+(require parser-tools/lex brag/support)
 
 (define (read-syntax path port)
-  (datum->syntax #f `(module rex-mod "expander.rkt"
+  (datum->syntax #f `(module rex-mod rex/expander
                        ,(parse path (tokenize port)))))
 (provide read-syntax)
-
-(require parser-tools/lex brag/support)
 
 (define-tokens value-tokens (ALPHA NUMBER PUNCTUATION ESCAPED-CHAR))
 (define-empty-tokens op-tokens (STAR GLOB))

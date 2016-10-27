@@ -14,7 +14,7 @@ you'll likely find other atrocious uses.
 The problem is that regular expressions make it very easy to write expressions
 that generate a lot of code and are slow (see theoretical background info).
 
-This approach makes really hard to write inefficient expressions. Execution
+This approach makes it really hard to write inefficient expressions. Execution
 time and memory usage of a rex is roughly proportional to the length of the
 expression.
 
@@ -43,8 +43,8 @@ And there are extensions to regular expressions that are implemented by some
 engines that take them into the area of context-sensitive languages which makes
 execution times even worse.
 
-If you try to specify anything other than what directly generates a DFA, it
-will complain and fail.
+The solution here is that if you try to specify anything other than what
+directly generates a DFA, it will complain and fail.
 
 > Note: Strictly speaking the automata generated are not DFAs because they
 > don't include an explicit fail state, but adding one is cheap so that is what
@@ -54,17 +54,15 @@ will complain and fail.
 ## Installation
 
 1. Install [Racket](https://racket-lang.org)
-1. Install the beautiful-racket packet using raco
-```
-raco pkg install beautiful-racket
-```
-1. Clone this repository.
-
+1. Install the beautiful-racket packet using raco: `raco pkg install beautiful-racket`
+1. Clone this repository
+1. Enter the repository: `cd rex`
+1. Install it as a package using raco: `raco pkg install`
+1. Enjoy
 
 ## Usage
 
-Create a file that has `#lang reader "reader.rkt"` as the first line. For it to
-work the file has to be in the same directory as the code.
+Create a file that has `#lang rex` as the first line.
 
 The initial line is followed by the actual expression. Lets take a look at what
 you can do.
@@ -73,6 +71,8 @@ A file is executed by running:
 ```
 racket filename.rkt "String to match"
 ```
+
+For other options and flags consult `racket filename.rkt --help`.
 
 ### Syntax
 
@@ -97,13 +97,13 @@ the line.
 
 This expression matches any string starting with banana:
 ```
-#lang reader "reader.rkt"
+#lang rex
 banana*
 ```
 
 This expression is equivalent to the regex ana[na]+s*:
 ```
-#lang reader "reader.rkt"
+#lang rex
 ananas*:0, 1, 2, 3, 4, 5 n->4
 ```
 By default the states are named 0 through n. You can override the names in the
@@ -111,16 +111,23 @@ second part.
 
 Or you can only construct an expression using only the second part:
 ```
-#lang reader "reader.rkt"
+#lang rex
 :=even .->odd, odd .-> even
 ```
 This recognizes strings of even length.
 
 Structures like branches are also allowed, but they have to be grouped by parens:
 ```
-#lang reader "reader.rkt"
+#lang rex
 (a|b)(a|(bc|d))
 ```
+
+You can also use loops to express a one-or-more-times pattern:
+```
+#lang rex
+a{b}a
+```
+This would match "abbbbbba" and any other number of b's but not "aa"
 
 ### Caveats
 
@@ -135,23 +142,20 @@ is not the same behavior as a normal wildcard. For instance `*banana*` will not
 match "bbanana"! The problem is that wildcards are inherently non-deterministic
 and this is the only way I see to include support for them.
 
+Also the \* can only be applied at the topmost scope, never inside of loops and
+branches.
+
 I am not sure whether it is a good idea or not to make the default behavior
 match single character loops (like in bbbbanana), but not multiple character
 loops (like in anananas with `*ananas`). Right now, I'm leaning towards not
 **really** surprising the user vs. making the default case easy.
 
 
-## Future
+## Contributing
 
-Here is what is planned for the future. In no particular order:
-* Cycles
-* Grouping as a racket package for installation with raco
+> On the internet nothing ever happens by asking permission." – Don't remember
 
-In the long term if this turns out to be useful, probably a fast implementation
-in C or C++ is desirable.
-
-
-## Development
+Just fork away, PRs welcome.
 
 There is a test suite as a python script that can be executed with
 `python integration.py -v`.
@@ -160,8 +164,7 @@ Be sure to run the full test suite before every commit and always introduce new
 tests with new features.
 
 
-## Contributing
+## Future
 
-> On the internet nothing ever happens by asking permission." – Don't remember
-
-Just fork away, PRs welcome.
+In the long term if this turns out to be useful, probably a fast implementation
+in C or C++ is desirable.
