@@ -117,9 +117,13 @@
 
 (define-macro (loop LOOP-CONTENT ...)
   #'(lambda (index first-nodes last-nodes fallback)
-      ;; TODO: STUB
-      ;; TODO: link up
-      `(,index ,first-nodes ,last-nodes ,fallback)))
+      (let ([new-data
+             (fold-funcs `(,index ,first-nodes ,last-nodes ,fallback)
+                         (filter procedure? (list LOOP-CONTENT ...)))])
+        (let ([transitions-at-start (cadr (gvector-ref node-vector (caar first-nodes)))])
+          (for ([i (caadr new-data)])
+            (update-node i #:transitions (append transitions-at-start (cadr (gvector-ref node-vector i)))))
+          new-data))))
 (provide loop)
 
 (define-macro (or "|")
