@@ -116,6 +116,12 @@ Or you can only construct an expression using only the second part:
 ```
 This recognizes strings of even length.
 
+Structures like branches are also allowed, but they have to be grouped by parens:
+```
+#lang reader "reader.rkt"
+(a|b)(a|(bc|d))
+```
+
 ### Caveats
 
 The \* and . were added to provide short useful expressions, but as opposed
@@ -139,11 +145,19 @@ loops (like in anananas with `*ananas`). Right now, I'm leaning towards not
 
 Here is what is planned for the future. In no particular order:
 * Cycles
-* Branches
-* Racket package for installation with raco
+* Grouping as a racket package for installation with raco
 
 In the long term if this turns out to be useful, probably a fast implementation
 in C or C++ is desirable.
+
+
+## Development
+
+There is a test suite as a python script that can be executed with
+`python integration.py -v`.
+
+Be sure to run the full test suite before every commit and always introduce new
+tests with new features.
 
 
 ## Contributing
