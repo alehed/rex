@@ -57,7 +57,6 @@ directly generates a DFA, it will complain and fail.
 1. Install the beautiful-racket packet using raco: `raco pkg install beautiful-racket`
 1. Clone this repository
 1. Enter the repository: `cd rex`
-1. Make sure everything works by executing the unit tests: `./tests/integration.py -v`
 1. Install it as a package using raco: `raco pkg install`
 1. Enjoy
 
