@@ -101,6 +101,13 @@ This expression matches any string starting with banana:
 banana*
 ```
 
+You can use `!` to say all characters except the one following.
+```
+#lang rex
+!test
+```
+This would match "best" or "Nest", but not "test".
+
 This expression is equivalent to the regex ana[na]+s*:
 ```
 #lang rex
@@ -158,10 +165,14 @@ loops (like in anananas with `*ananas`). Right now, I'm leaning towards not
 Just fork away, PRs welcome.
 
 There is a test suite as a python script that can be executed with
-`./tests/integration.py`.
+`cd tests && ./integration.py`.
 Be sure to run the full test suite before every commit and always introduce new
 tests with new features.
 
+### Development
+
+Reinstall the package with `raco pkg remove rex && raco pkg install` if it
+complains about module mismatch.
 
 ## Future
 
