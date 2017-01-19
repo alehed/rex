@@ -140,6 +140,9 @@
       `(,index ,first-nodes ,last-nodes ,index)))
 (provide STAR)
 
+;; expects its subfunctions (range, span, glob etc.) to return a list of ranges
+;; a range is a pair of characters: (start end).
+;; a character is in the range if char >= start and char <= end
 (define-macro (transition CHAR)
   #'(lambda (index [first-nodes void] [last-nodes void] [fallback void])
       (let ([current-node (gvector-ref node-vector index)])
@@ -162,8 +165,8 @@
 (provide GLOB)
 
 (define (character char)
-    `((,(string-ref char (sub1 (string-length char))) ,(string-ref char (sub1 (string-length char))))))
-;; BUG: \t and \n escape sequences recognized as t and n respectively
+  (let ([actual-char (effective-char char)])
+  `((,actual-char ,actual-char))))
 (provide character)
 
 (define-macro (range SPAN ...)
@@ -174,6 +177,17 @@
   (if (list? to-char) `(,(caar from-char) ,(caar to-char))
       (car from-char)))
 (provide span)
+
+(define (except bang excluded-char)
+  `((,(integer->char 0) ,(integer->char (sub1 (char->integer (caar excluded-char)))))
+    (,(integer->char (add1 (char->integer (caar excluded-char)))) ,(integer->char 256))))
+(provide except)
+
+;; returns the char that describes the given string.
+;; example: returns 'a' for "a" and '\' for "\\"
+;; BUG: \t and \n escape sequences recognized as t and n respectively
+(define (effective-char char-string)
+  (string-ref char-string (sub1 (string-length char-string))))
 
 (define-macro (explicit-expression NODE-LINE ...)
   #'(void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...)))))

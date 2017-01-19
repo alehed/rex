@@ -1,2 +1,2 @@
 #lang rex
-Hello\ World!
+Hello\ World\!

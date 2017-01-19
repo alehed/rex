@@ -79,6 +79,16 @@ test("test-cycles-3.rkt", ["abcbc", "abc", "acc"], "#t #t #f")
 
 test("test-cycles-4.rkt", ["a", "b", "", "aaaaaaa", "bb", "aaabbaaba"], "#t #t #f #t #t #f")
 
+# Tests for Not
+
+test("test-not-1.rkt", [" bc", "nbc", "bc", "abc", "cbcc"], "#t #t #f #f #f")
+
+test("test-not-2.rkt", ["password!", "012345", "passwords!", "01234-", "01234"], "#t #t #f #f #t")
+
+test("test-not-3.rkt", ["hello", "dfsd fsdf jksl", "asdfghjkl", "bca", "aaaaaa"], "#t #t #f #f #f")
+
+test("test-not-4.rkt", ["10001111", "0001", "10", "1111"], "#t #t #f #t")
+
 
 if failures == 0:
     print("All Tests Passed (" + str(passes) + ").")

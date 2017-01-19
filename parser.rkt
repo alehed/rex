@@ -14,11 +14,12 @@ or                  : "|"
 node-line           : ["="] node-identifier (transition "-" ">" node-identifier)*
 node-identifier     : (NUMBER | ALPHA | PUNCTUATION)+
 
-transition          : character | range | GLOB
+transition          : character | range | GLOB | except
 range               : "[" span ("," span)* "]"
 span                : character ["-" character]
+except              : "!" character
 
 ;; In addition to the regular ascii escape sequences
 ;; the following characters are reserved and have to be escaped with \:
-;; space;:*.,{}[]|\-=
+;; space;:*.,{}[]|\-=!
 character           : NUMBER | ALPHA | PUNCTUATION | ESCAPED-CHAR
