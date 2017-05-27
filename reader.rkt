@@ -27,3 +27,4 @@
       [any-char (next-token)])
      port))
   next-token)
+(provide tokenize)
