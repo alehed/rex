@@ -1,6 +1,6 @@
 #lang br/quicklang
 
-(require racket/cmdline)
+(require racket/cmdline racket/contract)
 (require data/gvector)
 
 ;; module begin
@@ -126,13 +126,13 @@
           new-data))))
 (provide loop)
 
-(define-macro (or "|")
+(define-macro (branch "|")
   #'(lambda (index first-nodes last-nodes fallback)
       `(,index
         ,(cons (cadr first-nodes) (cdr first-nodes))
         ,(cons (append (car first-nodes) (car last-nodes)) (cdr last-nodes))
         ,fallback)))
-(provide or)
+(provide branch)
 
 (define-macro STAR
   #'(lambda (index first-nodes last-nodes fallback)
@@ -166,7 +166,7 @@
 
 (define (character char)
   (let ([actual-char (effective-char char)])
-  `((,actual-char ,actual-char))))
+    `((,actual-char ,actual-char))))
 (provide character)
 
 (define-macro (range SPAN ...)
@@ -185,9 +185,13 @@
 
 ;; returns the char that describes the given string.
 ;; example: returns 'a' for "a" and '\' for "\\"
-;; BUG: \t and \n escape sequences recognized as t and n respectively
-(define (effective-char char-string)
-  (string-ref char-string (sub1 (string-length char-string))))
+(define/contract (effective-char char-string)
+  (string? . -> . char?)
+  (let ([last-char (string-ref char-string
+                               (sub1 (string-length char-string)))])
+      (if (and (char=? (string-ref char-string 0) #\\) (or (char=? last-char #\n) (char=? last-char #\t)))
+          (if (char=? last-char #\n) #\newline #\tab)
+          last-char)))
 
 (define-macro (explicit-expression NODE-LINE ...)
   #'(void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...)))))
@@ -221,7 +225,8 @@
 
 ;; Expression Matching
 
-(define (match-input string-list state-index)
+(define/contract (match-input string-list state-index)
+  ((listof char?) integer? . -> . boolean?)
   (if (empty? string-list) (if (cadddr (gvector-ref node-vector state-index)) #t
                                #f)
       (let ([new-state (calculate-new-state (car string-list) state-index)])
@@ -251,7 +256,8 @@
   (if (string? (cadr transition)) `(,(car transition) ,(index-of (cadr transition) names))
       transition))
 
-(define (index-of elem list)
+(define/contract (index-of elem list)
+  (any/c list? . -> . integer?)
   (if (empty? list) -1
       (if (equal? elem (car list)) 0
           (let ([index (index-of elem (cdr list))])

@@ -7,9 +7,9 @@ implicit-expression : [STAR] (limited-expression [STAR])*
 explicit-expression : node-line ("," node-line)*
 
 limited-expression  : transition | loop | sub-expression
-sub-expression      : "(" ( or | limited-expression )+ ")"
+sub-expression      : "(" ( branch | limited-expression )+ ")"
 loop                : "{" ( limited-expression )+ "}"
-or                  : "|"
+branch              : "|"
 
 node-line           : ["="] node-identifier (transition "-" ">" node-identifier)*
 node-identifier     : (NUMBER | ALPHA | PUNCTUATION)+

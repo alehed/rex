@@ -56,7 +56,7 @@ directly generates a DFA, it will complain and fail.
 1. Install [Racket](https://racket-lang.org)
 1. Install the beautiful-racket packet using raco: `raco pkg install beautiful-racket`
 1. Clone this repository
-1. Install it as a package using raco: `raco pkg install rex/`
+1. Install it as a package using raco: `raco pkg install ./rex`
 1. Enjoy
 
 ## Usage
@@ -176,10 +176,15 @@ tests with new features.
 
 ### Development
 
-Reinstall the package with `raco pkg remove rex && raco pkg install` if it
-complains about module mismatch.
+Once you added your changes you have to recompile the package using
+`raco setup --pkgs rex` otherwise racket will complain with:
+
+```
+link: module mismatch;
+ possibly, bytecode file needs re-compile because dependencies changed
+```
 
 ## Future
 
 In the long term if this turns out to be useful, probably a fast implementation
-in C or C++ is desirable.
+in C is desirable.

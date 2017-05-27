@@ -29,7 +29,7 @@ def test(expression_file, the_input, expected_output):
 
 test("test-tokenizer-1.rkt", ["-t"], "(rex (implicit-expression (limited-expression (transition (character h))) (limited-expression (transition (character e))) (limited-expression (transition (character l))) (limited-expression (transition (character l))) (limited-expression (transition (character o))) (limited-expression (transition (character h))) (limited-expression (transition (character i)))) : (explicit-expression (node-line (node-identifier 1) (transition (character 2)) - > (node-identifier a l p h a) (transition (character 4)) - > (node-identifier a l p h a)) , (node-line (node-identifier b e t a) (transition (character 3)) - > (node-identifier b e t a))))")
 
-test("test-new-all.rkt", ["-t"], "(rex (implicit-expression (limited-expression (transition (character a))) (limited-expression (loop { (limited-expression (sub-expression ( (limited-expression (transition (character b))) (or |) (limited-expression (transition (character c))) ))) })) (limited-expression (transition (character d)))))")
+test("test-new-all.rkt", ["-t"], "(rex (implicit-expression (limited-expression (transition (character a))) (limited-expression (loop { (limited-expression (sub-expression ( (limited-expression (transition (character b))) (branch |) (limited-expression (transition (character c))) ))) })) (limited-expression (transition (character d)))))")
 
 # Basic functionality tests
 
