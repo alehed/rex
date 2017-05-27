@@ -56,8 +56,7 @@ directly generates a DFA, it will complain and fail.
 1. Install [Racket](https://racket-lang.org)
 1. Install the beautiful-racket packet using raco: `raco pkg install beautiful-racket`
 1. Clone this repository
-1. Enter the repository: `cd rex`
-1. Install it as a package using raco: `raco pkg install`
+1. Install it as a package using raco: `raco pkg install rex/`
 1. Enjoy
 
 ## Usage
@@ -77,15 +76,21 @@ For other options and flags consult `racket filename.rkt --help`.
 ### Syntax
 
 The expression is composed of two parts separated by a colon ":". The first
-part looks like a regular expression without any of the fancy features. Right
-now there are the following wildcards: "\*" and ".". Otherwise only characters
-and character ranges are allowed.
+part looks like a regular expression without any of the fancy features (allowed
+are character ranges, not (!), branches and loops). There are also the following
+wildcards: "\*" and "." but some caveats apply (see that section).
 
 The second part explicitly defines the remaining transitions in the following
 format:
 ```
 no_one_recognized 1->one_recognized 0->no_one_recognized, = one_recognized .-> one_recognized
 ```
+States are separated by a comma. The state name is followed by zero or more
+transitions that have the format `character -> next_state_name`. States that are
+omitted in the end of the list will have the state number as their name. The
+equal sign preceding the state name denotes an accepting state. The last state
+is always accepting if there are no equal signs present.
+
 This expression matches any string that contains a "1". The equal sign denotes
 an accepting state (if no equal sign is given, the last state will
 automatically be the accepting state).

@@ -1,7 +1,7 @@
 #lang br/quicklang
 
 (require "parser.rkt")
-(require parser-tools/lex brag/support)
+(require brag/support)
 
 (define (read-syntax path port)
   (datum->syntax #f `(module rex-mod rex/expander
