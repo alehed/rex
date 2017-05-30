@@ -253,13 +253,21 @@
       (cons (resolve-transition (car transitions) names) (resolved-transitions (cdr transitions) names))))
 
 (define (resolve-transition transition names)
-  (if (string? (cadr transition)) `(,(car transition) ,(index-of (cadr transition) names))
+  (if (string? (cadr transition)) `(,(car transition) ,(index-of names (cadr transition)))
       transition))
 
-(define/contract (index-of elem list)
-  (any/c list? . -> . integer?)
-  (if (empty? list) -1
-      (if (equal? elem (car list)) 0
-          (let ([index (index-of elem (cdr list))])
-            (if (equal? -1 index) -1
-                (add1 index))))))
+
+;; Unit tests
+;; Everything that is not testable from the outside
+
+(module+ test
+  (require rackunit))
+
+;; effective-char
+(module+ test
+  (check-equal? (effective-char "a") #\a)
+  (check-equal? (effective-char "\\!") #\!)
+  (check-equal? (effective-char "\\\\") #\\)
+  (check-equal? (effective-char "\\n") #\newline)
+  (check-equal? (effective-char "\\t") #\tab)
+  (check-exn exn:fail:contract? (lambda () (effective-char #\a))))
