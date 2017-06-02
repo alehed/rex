@@ -1,6 +1,6 @@
 #lang br
 (require rex/parser
-         rex/reader
+         rex/tokenizer
          brag/support
          rackunit)
 

@@ -1,6 +1,11 @@
 #lang br/quicklang
 
+;;(require "parser.rkt")
+
 (require brag/support)
+
+(define-tokens value-tokens (ALPHA NUMBER PUNCTUATION ESCAPED-CHAR))
+(define-empty-tokens op-tokens (STAR GLOB))
 
 (define (tokenize port)
   (define (next-token)

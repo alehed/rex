@@ -9,41 +9,36 @@
   #'(#%module-begin
      (let ([to-match (command-line #:program "rex"
                                       #:once-each
-                                      [("--tree" "-t") "print the parse tree" (vector-set! flags 1 #t)]
-                                      [("--nodes" "-n") "display underlying data structure" (vector-set! flags 2 #t)]
-                                      [("--debug" "-d") "show debugging ouput" (vector-set! flags 3 #t)]
+                                      [("--debug" "-d") "show debugging ouput" (set-debug-mode! #t)]
                                       #:args string-to-parse string-to-parse)])
-       (if (and (empty? to-match) (not (vector-ref flags 1)) (not (vector-ref flags 2)) (not (vector-ref flags 3)))
+       (if (empty? to-match)
            (error "Please give a string to match or consult the help using --help\n")
-           (void))
-       (if (vector-ref flags 1) (begin
-                                  (display 'PARSE-TREE)
-                                  (display "\n"))
-           (void))
-       PARSE-TREE
-       (if (vector-ref flags 3) (display "\n") (void))
-       (if (vector-ref flags 2) (begin
-                                  (display (gvector->list node-vector))
-                                  (display "\n"))
-           (void))
-       (if (not (empty? to-match))
-           (begin
-             (for ([current-string to-match])
-               (display (match-input (string->list current-string) 0))
-               (display " "))
-             (display "\n"))
-           (void)))))
+           (displayln (match-my-strings PARSE-TREE to-match))))))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
+(define-macro (match-my-strings TREE STRINGS)
+  #'(begin
+      TREE
+      (map (lambda (curr-string)
+             (match-input (string->list curr-string) 0))
+           STRINGS)))
+(provide match-my-strings)
 
 ;; Expression Generation Helpers
 
-;; A vector containing the following global state flags:
-;; 0: prevent the last node from being accepting
-;; 1: print the parse tree
-;; 2: print the nodes
-;; 3: print the intermediate steps
-(define flags (make-vector 4 #f))
+(define last-node-accepting #f)
+
+(define/contract (set-last-node-accepting! accepting)
+  (boolean? . -> . void?)
+  (set! last-node-accepting accepting))
+(provide set-last-node-accepting!)
+
+(define debug-mode #f)
+
+(define/contract (set-debug-mode! mode)
+  (boolean? . -> . void?)
+  (set! debug-mode mode))
+(provide set-debug-mode!)
 
 ;; A vector containing all the states from the dfa
 ;; Each node (state) is a 4-tuple of the following format:
@@ -66,10 +61,15 @@
                               ,(if (integer? fallback) fallback -1)
                               ,(if (boolean? accepting) accepting #f))))
 
-(define (fold-funcs apl funcs)
+(define state-list
+  (gvector->list node-vector))
+(provide state-list)
+
+(define/contract (fold-funcs apl funcs)
+  (list? (listof procedure?) . -> . list?)
   (for/fold ([current-apl apl])
-            ([func (in-list funcs)])
-    (if (vector-ref flags 3) (display current-apl)
+      ([func funcs])
+    (if debug-mode (display current-apl)
         (void))
     (apply func current-apl)))
 
@@ -82,7 +82,7 @@
     (resolve-refs (map (lambda (node)
                          (car node))
                        (gvector->list node-vector)))
-    (if (not (vector-ref flags 0))
+    (if (not last-node-accepting)
         (for ([i (car last-first-nodes)])
           (update-node i #:accepting-state? #t))
         (void))))
@@ -204,7 +204,7 @@
             (void))
         (if (string? (car (list TRANSITIONS ...)))
             (begin
-              (vector-set! flags 0 #t)
+              (set-last-node-accepting! #t)
               (update-node index #:accepting-state? #t))
             (void))
         (void (fold-funcs `(,index) (filter procedure? (list TRANSITIONS ...))))

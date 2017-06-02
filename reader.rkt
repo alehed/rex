@@ -9,6 +9,4 @@
 (provide (contract-out
   [read-syntax (any/c input-port? . -> . syntax?)]))
 
-(define-tokens value-tokens (ALPHA NUMBER PUNCTUATION ESCAPED-CHAR))
-(define-empty-tokens op-tokens (STAR GLOB))
 
