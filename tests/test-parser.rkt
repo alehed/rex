@@ -1,12 +1,20 @@
-#lang br
+#lang racket/base
+
 (require rex/parser
          rex/tokenizer
          brag/support
          rackunit)
 
+
+(define prog1 #<<EOF
+hello;; test test!
+hi:1   2->alpha  4->alpha, beta 3->beta
+EOF
+)
+
 (check-equal?
  (parse-to-datum
-  (apply-tokenizer-maker tokenize "hello;; test test!\nhi:1   2->alpha  4->alpha, beta 3->beta"))
+  (apply-tokenizer-maker tokenize prog1))
  '(rex
    (implicit-expression
     (limited-expression (transition (character "h")))

@@ -1,8 +1,8 @@
-#lang br/quicklang
+#lang racket/base
 
-(require rackunit racket/contract)
-
-(require rex/expander)
+(require rackunit
+         racket/contract
+         rex/expander)
 
 (define/contract (contains-range range char)
   ((listof (listof char?)) char? . -> . boolean?)

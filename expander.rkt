@@ -8,21 +8,23 @@
 (define-macro (rex-module-begin PARSE-TREE)
   #'(#%module-begin
      (let ([to-match (command-line #:program "rex"
-                                      #:once-each
-                                      [("--debug" "-d") "show debugging ouput" (set-debug-mode! #t)]
-                                      #:args string-to-parse string-to-parse)])
+                                   #:once-each
+                                   [("--debug" "-d") "show debugging ouput" (set-debug-mode! #t)]
+                                   #:args string-to-parse string-to-parse)])
        (if (empty? to-match)
            (error "Please give a string to match or consult the help using --help\n")
-           (displayln (match-my-strings PARSE-TREE to-match))))))
+           (displayln (match-strings PARSE-TREE to-match))))))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
-(define-macro (match-my-strings TREE STRINGS)
+(define-macro (match-strings TREE STRINGS)
   #'(begin
+      (set-last-node-accepting! #f)
+      (clear-vector node-vector)
       TREE
       (map (lambda (curr-string)
              (match-input (string->list curr-string) 0))
            STRINGS)))
-(provide match-my-strings)
+(provide match-strings)
 
 ;; Expression Generation Helpers
 
@@ -47,6 +49,11 @@
 ;; Fail destination: place to go when no outgoing node matched (integer)
 ;; Accepting state (boolean)
 (define node-vector (make-gvector #:capacity 20))
+
+(define (clear-vector vect)
+    (if (eq? (gvector-count vect) 0) (void)
+        (begin (gvector-remove-last! vect)
+               (clear-vector vect))))
 
 (define (update-node index #:name [name void] #:transitions [transitions void] #:fallback [fallback void] #:accepting-state? [accepting void])
   (let ([current-node (gvector-ref node-vector index)])
@@ -189,26 +196,26 @@
   (string? . -> . char?)
   (let ([last-char (string-ref char-string
                                (sub1 (string-length char-string)))])
-      (if (and (char=? (string-ref char-string 0) #\\) (or (char=? last-char #\n) (char=? last-char #\t)))
-          (if (char=? last-char #\n) #\newline #\tab)
-          last-char)))
+    (if (and (char=? (string-ref char-string 0) #\\) (or (char=? last-char #\n) (char=? last-char #\t)))
+        (if (char=? last-char #\n) #\newline #\tab)
+        last-char)))
 
 (define-macro (explicit-expression NODE-LINE ...)
   #'(void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...)))))
 (provide explicit-expression)
 
 (define-macro (node-line TRANSITIONS ...)
-    #'(lambda (index)
-        (if (<= (gvector-count node-vector) index)
-              (add-node (number->string index))
-            (void))
-        (if (string? (car (list TRANSITIONS ...)))
-            (begin
-              (set-last-node-accepting! #t)
-              (update-node index #:accepting-state? #t))
-            (void))
-        (void (fold-funcs `(,index) (filter procedure? (list TRANSITIONS ...))))
-        `(,(add1 index))))
+  #'(lambda (index)
+      (if (<= (gvector-count node-vector) index)
+          (add-node (number->string index))
+          (void))
+      (if (string? (car (list TRANSITIONS ...)))
+          (begin
+            (set-last-node-accepting! #t)
+            (update-node index #:accepting-state? #t))
+          (void))
+      (void (fold-funcs `(,index) (filter procedure? (list TRANSITIONS ...))))
+      `(,(add1 index))))
 (provide node-line)
 
 (define-macro (node-identifier IDENT ...)

@@ -8,5 +8,3 @@
                        ,(parse path (tokenize port)))))
 (provide (contract-out
   [read-syntax (any/c input-port? . -> . syntax?)]))
-
-
