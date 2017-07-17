@@ -62,9 +62,8 @@ directly generates a DFA, it will complain and fail.
 ### For development
 
 1. Install [Racket](https://racket-lang.org)
-1. Install the dependencies using raco: `raco pkg install brag data rackunit`
 1. Clone this repository
-1. Install it as a package using raco: `raco pkg install ./rex`
+1. Install it as a local package using raco: `raco pkg install ./rex`
 1. Enjoy
 
 ## Usage
@@ -85,7 +84,7 @@ For other options and flags consult `racket filename.rkt --help`.
 
 ### Syntax
 
-For a detailed documentation of the syntax, please consult the [documentation](www.racket-lang.org).
+For a detailed documentation of the syntax, please consult the [documentation](http://docs.racket-lang.org/rex).
 
 ## Contributing
 
