@@ -21,6 +21,7 @@
               (error "Please give a string to match or consult the help using --help\n")
               (displayln (match-strings PARSE-TREE to-match)))))]))
 (provide (rename-out [rex-module-begin #%module-begin]))
+(provide #%top #%app #%datum #%top-interaction)
 
 (define-syntax (match-strings stx)
   (syntax-case stx ()

@@ -53,8 +53,16 @@ directly generates a DFA, it will complain and fail.
 
 ## Installation
 
+### For regular usage
+
 1. Install [Racket](https://racket-lang.org)
-1. Install the beautiful-racket packet using raco: `raco pkg install beautiful-racket`
+1. Install the package using raco: `raco pkg install rex`
+1. Enjoy
+
+### For development
+
+1. Install [Racket](https://racket-lang.org)
+1. Install the dependencies using raco: `raco pkg install brag data rackunit`
 1. Clone this repository
 1. Install it as a package using raco: `raco pkg install ./rex`
 1. Enjoy
@@ -63,12 +71,11 @@ directly generates a DFA, it will complain and fail.
 
 Create a file that has `#lang rex` as the first line.
 
-The initial line is followed by the actual expression. Lets take a look at what
-you can do.
+The initial line is followed by the actual expression. See the examples section.
 
 A file is executed by running:
 ```
-racket filename.rkt "String to match"
+racket filename.rkt "String to match" "Second string to match..."
 ```
 
 For other options and flags consult `racket filename.rkt --help`.
@@ -165,14 +172,12 @@ loops (like in anananas with `*ananas`). Right now, I'm leaning towards not
 
 ## Contributing
 
-> On the internet nothing ever happens by asking permission." – Don't remember
+> “On the internet nothing ever happens by asking permission.” – Don't remember
 
 Just fork away, PRs welcome.
 
-There is a test suite as a python script that can be executed with
-`cd tests && ./integration.py`.
-Be sure to run the full test suite before every commit and always introduce new
-tests with new features.
+The test-suite is run with `raco test -p rex`. Make sure it runs before every
+commit. New features should preferably add a corresponding file in `tests/`.
 
 ### Development
 
