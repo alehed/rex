@@ -1,9 +1,6 @@
 #lang racket/base
 
 (require rackunit)
-(require rex/expander
-         rex/parser
-         rex/tokenizer)
 (require "helper.rkt")
 
 (check-equal? (eval-rex "(a|b|c)" '("a" "b" "c" "" "d" "ab"))

@@ -1,9 +1,9 @@
 #lang racket/base
 
-(require rex/parser
-         rex/tokenizer
-         brag/support
-         rackunit)
+(require brag/support
+         rackunit
+         rex/parser
+         rex/tokenizer)
 
 
 (define prog1 #<<EOF

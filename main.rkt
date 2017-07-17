@@ -1,4 +1,4 @@
-#lang br/quicklang
+#lang racket/base
 
 (module reader br
   (require "reader.rkt")

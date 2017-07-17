@@ -1,7 +1,8 @@
-#lang br/quicklang
+#lang racket/base
 
-(require "parser.rkt" "tokenizer.rkt")
 (require racket/contract)
+(require "parser.rkt"
+         "tokenizer.rkt")
 
 (define (read-syntax path port)
   (datum->syntax #f `(module rex-mod rex/expander

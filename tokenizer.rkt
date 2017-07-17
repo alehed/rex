@@ -1,6 +1,4 @@
-#lang br/quicklang
-
-;;(require "parser.rkt")
+#lang racket/base
 
 (require brag/support)
 

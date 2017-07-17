@@ -1,29 +1,37 @@
-#lang br/quicklang
+#lang racket/base
 
-(require racket/cmdline racket/contract)
-(require data/gvector)
+(require (for-syntax racket/base))
+
+(require racket/cmdline
+         racket/contract
+         racket/list
+         data/gvector)
 
 ;; module begin
 
-(define-macro (rex-module-begin PARSE-TREE)
-  #'(#%module-begin
-     (let ([to-match (command-line #:program "rex"
-                                   #:once-each
-                                   [("--debug" "-d") "show debugging ouput" (set-debug-mode! #t)]
-                                   #:args string-to-parse string-to-parse)])
-       (if (empty? to-match)
-           (error "Please give a string to match or consult the help using --help\n")
-           (displayln (match-strings PARSE-TREE to-match))))))
+(define-syntax (rex-module-begin stx)
+  (syntax-case stx ()
+    [(_ PARSE-TREE)
+     #'(#%module-begin
+        (let ([to-match (command-line #:program "rex"
+                                      #:once-each
+                                      [("--debug" "-d") "show debugging ouput" (set-debug-mode! #t)]
+                                      #:args string-to-parse string-to-parse)])
+          (if (empty? to-match)
+              (error "Please give a string to match or consult the help using --help\n")
+              (displayln (match-strings PARSE-TREE to-match)))))]))
 (provide (rename-out [rex-module-begin #%module-begin]))
 
-(define-macro (match-strings TREE STRINGS)
-  #'(begin
-      (set-last-node-accepting! #f)
-      (clear-vector node-vector)
-      TREE
-      (map (lambda (curr-string)
-             (match-input (string->list curr-string) 0))
-           STRINGS)))
+(define-syntax (match-strings stx)
+  (syntax-case stx ()
+    [(_ TREE STRINGS)
+     #'(begin
+         (set-last-node-accepting! #f)
+         (clear-vector node-vector)
+         TREE
+         (map (lambda (curr-string)
+                (match-input (string->list curr-string) 0))
+              STRINGS))]))
 (provide match-strings)
 
 ;; Expression Generation Helpers
@@ -51,9 +59,9 @@
 (define node-vector (make-gvector #:capacity 20))
 
 (define (clear-vector vect)
-    (if (eq? (gvector-count vect) 0) (void)
-        (begin (gvector-remove-last! vect)
-               (clear-vector vect))))
+  (if (eq? (gvector-count vect) 0) (void)
+      (begin (gvector-remove-last! vect)
+             (clear-vector vect))))
 
 (define (update-node index #:name [name void] #:transitions [transitions void] #:fallback [fallback void] #:accepting-state? [accepting void])
   (let ([current-node (gvector-ref node-vector index)])
@@ -75,7 +83,7 @@
 (define/contract (fold-funcs apl funcs)
   (list? (listof procedure?) . -> . list?)
   (for/fold ([current-apl apl])
-      ([func funcs])
+            ([func funcs])
     (if debug-mode (display current-apl)
         (void))
     (apply func current-apl)))
@@ -100,48 +108,58 @@
 ;; stack of tuple: stack of first nodes
 ;; stack of tuple: stack of last nodes
 ;; index: the current fallback node
-(define-macro (implicit-expression LIMITED-EXP ...)
-  #'(begin
-      (add-node "0")
-      (fold-funcs '(0 ((0)) () -1) (list LIMITED-EXP ...))))
+(define-syntax (implicit-expression stx)
+  (syntax-case stx ()
+    [(_ LIMITED-EXP ...)
+     #'(begin
+         (add-node "0")
+         (fold-funcs '(0 ((0)) () -1) (list LIMITED-EXP ...)))]))
 (provide implicit-expression)
 
-(define-macro (limited-expression CONTENT)
-  #'(lambda (index first-nodes last-nodes fallback)
-      (apply CONTENT `(,index ,first-nodes ,last-nodes ,fallback))))
+(define-syntax (limited-expression stx)
+  (syntax-case stx ()
+    [(_ CONTENT)
+     #'(lambda (index first-nodes last-nodes fallback)
+         (apply CONTENT `(,index ,first-nodes ,last-nodes ,fallback)))]))
 (provide limited-expression)
 
-(define-macro (sub-expression EXPR-CONTENT ...)
-  #'(lambda (index first-nodes last-nodes fallback)
+(define-syntax (sub-expression stx)
+  (syntax-case stx ()
+    [(_ EXPR-CONTENT ...)
+     #'(lambda (index first-nodes last-nodes fallback)
       (let ([new-data
              (fold-funcs `(,index ,(cons (car first-nodes) first-nodes) ,(cons '() last-nodes) ,fallback)
                          (filter procedure? (list EXPR-CONTENT ...)))])
         `(,(car new-data)
           ,(cons (append (caadr new-data) (caaddr new-data)) (cdaddr new-data))
           ,(cdaddr new-data)
-          ,(cadddr new-data)))))
+          ,(cadddr new-data))))]))
 (provide sub-expression)
 
-(define-macro (loop LOOP-CONTENT ...)
-  #'(lambda (index first-nodes last-nodes fallback)
+(define-syntax (loop stx)
+  (syntax-case stx ()
+    [(_ LOOP-CONTENT ...)
+     #'(lambda (index first-nodes last-nodes fallback)
       (let ([new-data
              (fold-funcs `(,index ,first-nodes ,last-nodes ,fallback)
                          (filter procedure? (list LOOP-CONTENT ...)))])
         (let ([transitions-at-start (cadr (gvector-ref node-vector (caar first-nodes)))])
           (for ([i (caadr new-data)])
             (update-node i #:transitions (append transitions-at-start (cadr (gvector-ref node-vector i)))))
-          new-data))))
+          new-data)))]))
 (provide loop)
 
-(define-macro (branch "|")
-  #'(lambda (index first-nodes last-nodes fallback)
+(define-syntax (branch stx)
+  (syntax-case stx ()
+    [(_ bar)
+     #'(lambda (index first-nodes last-nodes fallback)
       `(,index
         ,(cons (cadr first-nodes) (cdr first-nodes))
         ,(cons (append (car first-nodes) (car last-nodes)) (cdr last-nodes))
-        ,fallback)))
+        ,fallback))]))
 (provide branch)
 
-(define-macro STAR
+(define-syntax (STAR stx)
   #'(lambda (index first-nodes last-nodes fallback)
       (update-node index #:fallback index)
       `(,index ,first-nodes ,last-nodes ,index)))
@@ -150,8 +168,10 @@
 ;; expects its subfunctions (range, span, glob etc.) to return a list of ranges
 ;; a range is a pair of characters: (start end).
 ;; a character is in the range if char >= start and char <= end
-(define-macro (transition CHAR)
-  #'(lambda (index [first-nodes void] [last-nodes void] [fallback void])
+(define-syntax (transition stx)
+  (syntax-case stx ()
+    [(_ CHAR)
+     #'(lambda (index [first-nodes void] [last-nodes void] [fallback void])
       (let ([current-node (gvector-ref node-vector index)])
         (if (integer? fallback)
             (begin ;; in implicit expression
@@ -164,7 +184,7 @@
             (begin ;; in explicit expression
               (update-node index #:transitions (append (map (lambda (pair)
                                                               `(,pair)) CHAR) (cadr current-node)))
-              `(,index))))))
+              `(,index)))))]))
 (provide transition)
 
 (define GLOB
@@ -176,8 +196,10 @@
     `((,actual-char ,actual-char))))
 (provide character)
 
-(define-macro (range SPAN ...)
-  #'(filter list? (list SPAN ...)))
+(define-syntax (range stx)
+  (syntax-case stx ()
+    [(_ SPAN ...)
+     #'(filter list? (list SPAN ...))]))
 (provide range)
 
 (define (span from-char [to "-"] [to-char void])
@@ -200,12 +222,16 @@
         (if (char=? last-char #\n) #\newline #\tab)
         last-char)))
 
-(define-macro (explicit-expression NODE-LINE ...)
-  #'(void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...)))))
+(define-syntax (explicit-expression stx)
+  (syntax-case stx ()
+    [(_ NODE-LINE ...)
+     #'(void (fold-funcs '(0) (filter procedure? (list NODE-LINE ...))))]))
 (provide explicit-expression)
 
-(define-macro (node-line TRANSITIONS ...)
-  #'(lambda (index)
+(define-syntax (node-line stx)
+  (syntax-case stx ()
+    [(_ TRANSITIONS ...)
+     #'(lambda (index)
       (if (<= (gvector-count node-vector) index)
           (add-node (number->string index))
           (void))
@@ -215,18 +241,20 @@
             (update-node index #:accepting-state? #t))
           (void))
       (void (fold-funcs `(,index) (filter procedure? (list TRANSITIONS ...))))
-      `(,(add1 index))))
+      `(,(add1 index)))]))
 (provide node-line)
 
-(define-macro (node-identifier IDENT ...)
-  #'(lambda (index)
+(define-syntax (node-identifier stx)
+  (syntax-case stx ()
+    [(_ IDENT ...)
+     #'(lambda (index)
       (let ([current-transitions (cadr (gvector-ref node-vector index))])
         (if (empty? current-transitions) (update-node index #:name (string-append IDENT ...))
             (update-node index #:transitions (map (lambda (transition)
                                                     (if (equal? 2 (length transition)) transition
                                                         `(,(car transition) ,(string-append IDENT ...))))
                                                   current-transitions))))
-      `(,index)))
+      `(,index))]))
 (provide node-identifier)
 
 

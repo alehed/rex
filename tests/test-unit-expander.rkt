@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require rackunit
-         racket/contract
+(require racket/contract
+         rackunit
          rex/expander)
 
 (define/contract (contains-range range char)
