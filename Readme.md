@@ -71,104 +71,21 @@ directly generates a DFA, it will complain and fail.
 
 Create a file that has `#lang rex` as the first line.
 
-The initial line is followed by the actual expression. See the examples section.
+The initial line is followed by the actual expression.
 
-A file is executed by running:
+A basic rex that matches the string "abc" but nothing else looks like this.
 ```
-racket filename.rkt "String to match" "Second string to match..."
+#lang rex
+abc
 ```
+
+This file would be executed by running: `racket abc.rkt "abc" "abcd"`. This should print `(#t #f)` since the first expression was matched successfully while the second one was not.
 
 For other options and flags consult `racket filename.rkt --help`.
 
 ### Syntax
 
-The expression is composed of two parts separated by a colon ":". The first
-part looks like a regular expression without any of the fancy features (allowed
-are character ranges, not (!), branches and loops). There are also the following
-wildcards: "\*" and "." but some caveats apply (see that section).
-
-The second part explicitly defines the remaining transitions in the following
-format:
-```
-no_one_recognized 1->one_recognized 0->no_one_recognized, = one_recognized .-> one_recognized
-```
-States are separated by a comma. The state name is followed by zero or more
-transitions that have the format `character -> next_state_name`. States that are
-omitted in the end of the list will have the state number as their name. The
-equal sign preceding the state name denotes an accepting state. The last state
-is always accepting if there are no equal signs present.
-
-This expression matches any string that contains a "1". The equal sign denotes
-an accepting state (if no equal sign is given, the last state will
-automatically be the accepting state).
-
-Whitespace is ignored by default, comments start with ; and last to the end of
-the line.
-
-### Examples
-
-This expression matches any string starting with banana:
-```
-#lang rex
-banana*
-```
-
-You can use `!` to say all characters except the one following.
-```
-#lang rex
-!test
-```
-This would match "best" or "Nest", but not "test".
-
-This expression is equivalent to the regex ana[na]+s*:
-```
-#lang rex
-ananas*:0, 1, 2, 3, 4, 5 n->4
-```
-By default the states are named 0 through n. You can override the names in the
-second part.
-
-Or you can only construct an expression using only the second part:
-```
-#lang rex
-:=even .->odd, odd .-> even
-```
-This recognizes strings of even length.
-
-Structures like branches are also allowed, but they have to be grouped by parens:
-```
-#lang rex
-(a|b)(a|(bc|d))
-```
-
-You can also use loops to express a one-or-more-times pattern:
-```
-#lang rex
-a{b}a
-```
-This would match "abbbbbba" and any other number of b's but not "aa"
-
-### Caveats
-
-The \* and . were added to provide short useful expressions, but as opposed
-to real regexes, they don't work the way you would expect them to. The . does
-what you would think but it has to be the only transition going out of the state,
-otherwise it will complain about a non-deterministic expression and fail.
-
-The problem of the \* is more subtle. It controls the fail-state. Instead of
-failing, the expression simply goes to the last \*. This seems reasonable but
-is not the same behavior as a normal wildcard. For instance `*banana*` will not
-match "bbanana"! The problem is that wildcards are inherently non-deterministic
-and this is the only way I see to include support for them.
-
-Also the \* can only be applied at the topmost scope, never inside of loops and
-branches.
-
-I am not sure whether it is a good idea or not to make the default behavior
-match single character loops (like in bbbbanana), but not multiple character
-loops (like in anananas with `*ananas`). Right now, I'm leaning towards not
-**really** surprising the user vs. making the default case easy.
-
+For a detailed documentation of the syntax, please consult the [documentation](www.racket-lang.org).
 
 ## Contributing
 
