@@ -6,18 +6,10 @@ before_script:
   - /usr/racket/bin/raco pkg install --auto --no-setup ../rex
 
 stages:
-  - build
   - test
-
-cache:
-  untracked: true
-
-build:
-  stage: build
-  script:
-    - /usr/racket/bin/raco setup --pkgs rex
 
 test:
   stage: test
   script:
+    - /usr/racket/bin/raco setup --pkgs rex
     - /usr/racket/bin/raco test -p rex
