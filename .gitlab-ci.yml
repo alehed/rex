@@ -1,0 +1,20 @@
+before_script:
+  - curl -O https://download.racket-lang.org/releases/6.9/installers/racket-minimal-6.9-x86_64-linux.sh
+  - ./racket-minimal-6.9-x86_64-linux.sh
+
+stages:
+  - build
+  - test
+
+cache:
+  untracked: true
+
+build:
+  stage: build
+  script:
+    - raco pkg install ./rex
+
+test:
+  stage: test
+  script:
+    - raco test -p rex
