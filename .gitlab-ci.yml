@@ -14,7 +14,7 @@ build:
   stage: build
   script:
     - ls
-    - /usr/racket/bin/raco pkg install ./rex
+    - /usr/racket/bin/raco pkg install ../rex
 
 test:
   stage: test
