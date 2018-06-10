@@ -1,6 +1,7 @@
 *~
 \#*
 compiled/
+doc/
 output*
 *.DS_Store
 *.html
