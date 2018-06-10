@@ -1,6 +1,5 @@
 before_script:
-  - INSTALLER=`curl https://mirror.racket-lang.org/installers/recent/ 2>&1 | grep -Eo "racke\
-t-minimal-[[:digit:]]\.[[:digit:]]{1,3}-x86_64-linux.sh" | head -n 1`
+  - INSTALLER=`curl https://mirror.racket-lang.org/installers/recent/ 2>&1 | grep -Eo "racket-minimal-[[:digit:]]\.[[:digit:]]{1,3}-x86_64-linux.sh" | head -n 1`
   - curl -O "https://mirror.racket-lang.org/installers/recent/$INSTALLER"
   - sh racket-minimal-*
   - /usr/racket/bin/raco pkg install --auto --skip-installed --batch br-parser-tools-lib base brag data-lib racket-doc rackunit-lib scribble-lib
